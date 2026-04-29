@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# MicroPython compiled
+*.mpy
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Local research notes (keep private drafts out of git)
+docs/private/
+
+# Hardware exports
+hardware/enclosures/*.gcode
+hardware/enclosures/*.stl
+
+# Data logs (never commit patient data)
+logs/
+*.csv
+*.log

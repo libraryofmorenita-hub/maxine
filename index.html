@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maxine — Open Patient Monitoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@300;400&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:      #1c1a17;
+    --ink-2:    #4a4640;
+    --ink-3:    #8c8680;
+    --paper:    #f5f0e8;
+    --paper-2:  #ede7d8;
+    --paper-3:  #e2dace;
+    --rust:     #b5451b;
+    --rust-2:   #d4612a;
+    --moss:     #3d5a40;
+    --moss-2:   #4e7353;
+    --slate:    #2d3a4a;
+    --border:   rgba(28,26,23,0.12);
+    --serif:    'Lora', Georgia, serif;
+    --mono:     'DM Mono', monospace;
+    --sans:     'Instrument Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 2.5rem;
+    background: rgba(245,240,232,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--rust); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--rust); }
+  .nav-cta {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.5rem 1.1rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s;
+    text-decoration: none;
+  }
+  .nav-cta:hover { background: var(--rust); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5rem 3rem 5rem 6rem;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 2rem;
+    height: 1px;
+    background: var(--rust);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(3rem, 5.5vw, 5rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.75rem;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--rust);
+  }
+  .hero-body {
+    font-size: 1.05rem;
+    color: var(--ink-2);
+    line-height: 1.75;
+    max-width: 42ch;
+    margin-bottom: 2.5rem;
+  }
+  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1.8rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-primary:hover { background: var(--rust); transform: translateY(-1px); }
+  .btn-secondary {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1.8rem;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--rust); color: var(--rust); }
+
+  .hero-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 4rem 4rem 2rem;
+    position: relative;
+  }
+
+  /* Device illustration */
+  .device-viz {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+  }
+  .device-screen {
+    background: var(--slate);
+    border-radius: 4px;
+    padding: 1.5rem;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(28,26,23,0.22), 0 4px 12px rgba(28,26,23,0.1);
+  }
+  .device-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .device-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .device-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: #4ade80;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .vitals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .vital-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    padding: 0.85rem;
+  }
+  .vital-label {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 0.4rem;
+  }
+  .vital-value {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: #fff;
+    line-height: 1;
+  }
+  .vital-value span {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.45);
+    margin-left: 0.25rem;
+  }
+  .vital-card.highlight .vital-value { color: #fb923c; }
+  .vital-card.ok .vital-label::after {
+    content: ' ●';
+    color: #4ade80;
+    font-size: 0.5rem;
+  }
+  .device-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.3);
+  }
+  .ble-badge {
+    padding: 0.2rem 0.5rem;
+    background: rgba(59,130,246,0.2);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 2px;
+    color: #93c5fd;
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+  }
+  .epaper-badge {
+    padding: 0.2rem 0.5rem;
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 2px;
+    color: #86efac;
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* decorative line graph */
+  .mini-graph {
+    height: 36px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  .mini-graph svg { width: 100%; height: 100%; }
+
+  /* floating tags */
+  .tag-float {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--border);
+    background: var(--paper);
+    color: var(--ink-2);
+    white-space: nowrap;
+    animation: float-gentle 4s ease-in-out infinite;
+  }
+  .tag-float:nth-child(2) { animation-delay: -1.5s; }
+  .tag-float:nth-child(3) { animation-delay: -3s; }
+  @keyframes float-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .tag-1 { top: 12%; right: -1rem; }
+  .tag-2 { bottom: 28%; left: -2rem; }
+  .tag-3 { top: 45%; right: -2.5rem; }
+
+  /* ── ORIGIN SECTION ── */
+  .origin {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 60vh;
+    border-top: 1px solid var(--border);
+  }
+  .origin-text {
+    padding: 5rem 4rem 5rem 6rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 1.5rem;
+    height: 1px;
+    background: var(--rust);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+  .origin-body {
+    font-size: 0.98rem;
+    color: var(--ink-2);
+    line-height: 1.8;
+    max-width: 48ch;
+  }
+  .origin-body p + p { margin-top: 1rem; }
+
+  .origin-timeline {
+    padding: 5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    background: var(--paper-2);
+  }
+  .timeline-item {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .timeline-item.visible { opacity: 1; transform: none; }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--rust);
+    flex-shrink: 0;
+    margin-top: 0.35rem;
+  }
+  .timeline-date {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+    margin-bottom: 0.3rem;
+  }
+  .timeline-title {
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .timeline-desc {
+    font-size: 0.85rem;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+
+  /* ── WHAT MAXINE IS ── */
+  .what {
+    padding: 6rem;
+    border-top: 1px solid var(--border);
+    background: var(--paper);
+  }
+  .what-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+    gap: 2rem;
+  }
+  .what-intro { max-width: 44ch; }
+  .what-intro h2 { margin-bottom: 0.5rem; }
+  .what-intro p { font-size: 0.95rem; color: var(--ink-2); line-height: 1.75; }
+  .disclaimer {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--paper-2);
+    max-width: 28ch;
+    line-height: 1.6;
+  }
+
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+  .pillar {
+    padding: 2.5rem;
+    border-right: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .pillar:last-child { border-right: none; }
+  .pillar:hover { background: var(--paper-2); }
+  .pillar-num {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--rust);
+    margin-bottom: 1rem;
+  }
+  .pillar h3 {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+  .pillar p {
+    font-size: 0.875rem;
+    color: var(--ink-2);
+    line-height: 1.75;
+  }
+  .pillar-tags {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.6rem;
+    background: var(--paper-3);
+    color: var(--ink-2);
+    border: 1px solid var(--border);
+  }
+
+  /* ── SPECS STRIP ── */
+  .specs {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 3rem 6rem;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .spec-item {
+    flex: 1;
+    min-width: 140px;
+    padding: 0 2rem;
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+  .spec-item:first-child { padding-left: 0; }
+  .spec-item:last-child { border-right: none; }
+  .spec-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 0.4rem;
+  }
+  .spec-val {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    color: var(--paper);
+    font-weight: 600;
+  }
+  .spec-sub {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.35);
+    margin-top: 0.15rem;
+  }
+
+  /* ── AUDIENCE ── */
+  .audience {
+    padding: 6rem;
+    border-top: 1px solid var(--border);
+    background: var(--paper-2);
+  }
+  .audience h2 { margin-bottom: 0.75rem; }
+  .audience-intro {
+    font-size: 0.95rem;
+    color: var(--ink-2);
+    max-width: 50ch;
+    line-height: 1.75;
+    margin-bottom: 3rem;
+  }
+  .audience-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .aud-card {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .aud-card:hover {
+    box-shadow: 0 8px 32px rgba(28,26,23,0.1);
+    transform: translateY(-2px);
+  }
+  .aud-icon {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  .aud-card h3 {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .aud-card p {
+    font-size: 0.85rem;
+    color: var(--ink-2);
+    line-height: 1.7;
+  }
+  .aud-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--rust);
+    text-decoration: none;
+    transition: gap 0.2s;
+  }
+  .aud-link:hover { gap: 0.7rem; }
+
+  /* ── OPEN SOURCE BANNER ── */
+  .oss-banner {
+    padding: 5rem 6rem;
+    background: var(--moss);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3rem;
+    border-top: 1px solid var(--border);
+  }
+  .oss-text h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    color: var(--paper);
+    margin-bottom: 0.75rem;
+  }
+  .oss-text p {
+    font-size: 0.95rem;
+    color: rgba(245,240,232,0.7);
+    max-width: 46ch;
+    line-height: 1.75;
+  }
+  .oss-actions { display: flex; gap: 1rem; flex-shrink: 0; }
+  .btn-light {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1.8rem;
+    background: var(--paper);
+    color: var(--ink);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-light:hover { opacity: 0.85; }
+  .btn-outline-light {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1.8rem;
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid rgba(245,240,232,0.35);
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .btn-outline-light:hover { border-color: var(--paper); }
+
+  /* ── DISCLAIMER FOOTER ── */
+  .disclaimer-bar {
+    padding: 2rem 6rem;
+    background: var(--paper-3);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  .disclaimer-bar p {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    line-height: 1.6;
+    max-width: 80ch;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 3rem 6rem;
+    background: var(--ink);
+    color: rgba(245,240,232,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .footer-logo {
+    font-family: var(--serif);
+    font-size: 1rem;
+    color: var(--paper);
+  }
+  .footer-logo span { color: var(--rust-2); }
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+  .footer-links a {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: rgba(245,240,232,0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--paper); }
+  .footer-credit {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: rgba(245,240,232,0.25);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-up.visible { opacity: 1; transform: none; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; min-height: auto; }
+    .hero-left { padding: 6rem 2rem 3rem; }
+    .hero-right { padding: 2rem; }
+    .origin { grid-template-columns: 1fr; }
+    .origin-text { padding: 3rem 2rem; border-right: none; border-bottom: 1px solid var(--border); }
+    .origin-timeline { padding: 3rem 2rem; }
+    .what { padding: 3rem 2rem; }
+    .what-header { flex-direction: column; align-items: flex-start; }
+    .pillars { grid-template-columns: 1fr; }
+    .pillar { border-right: none; border-bottom: 1px solid var(--border); }
+    .specs { padding: 2rem; flex-wrap: wrap; gap: 1.5rem; }
+    .spec-item { border-right: none; padding: 0; min-width: 100px; }
+    .audience { padding: 3rem 2rem; }
+    .audience-cards { grid-template-columns: 1fr; }
+    .oss-banner { padding: 3rem 2rem; flex-direction: column; }
+    .oss-actions { flex-direction: column; }
+    .disclaimer-bar { padding: 1.5rem 2rem; }
+    footer { padding: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Max<span>ine</span></a>
+  <ul class="nav-links">
+    <li><a href="#origin">Origin</a></li>
+    <li><a href="#what">What it is</a></li>
+    <li><a href="#audience">Who it's for</a></li>
+    <li><a href="#open-source">Open source</a></li>
+  </ul>
+  <a href="dashboard.html" class="nav-cta">Research dashboard →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">Open patient monitoring</div>
+    <h1>Technology built for <em>human</em> dignity</h1>
+    <p class="hero-body">
+      Maxine is an open-source bedside patient monitoring system — wireless, modular, and built for anyone who needs it. Born from a real clinical need in Puerto Rico, shaped for the world.
+    </p>
+    <div class="hero-actions">
+      <a href="#open-source" class="btn-primary">Get the project ↗</a>
+      <a href="dashboard.html" class="btn-secondary">Research dashboard</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="tag-float tag-1">ESP32 · MicroPython</div>
+    <div class="tag-float tag-2">BLE wireless · e-paper</div>
+    <div class="tag-float tag-3">Open source · CC-BY</div>
+    <div class="device-viz">
+      <div class="device-screen">
+        <div class="device-header">
+          <span class="device-title">Maxine · Bedside Unit</span>
+          <span class="device-status"><span class="status-dot"></span>Live</span>
+        </div>
+        <div class="vitals-grid">
+          <div class="vital-card ok">
+            <div class="vital-label">Heart rate</div>
+            <div class="vital-value" id="hr-val">72<span>bpm</span></div>
+          </div>
+          <div class="vital-card ok">
+            <div class="vital-label">SpO2</div>
+            <div class="vital-value" id="spo2-val">98<span>%</span></div>
+          </div>
+          <div class="vital-card">
+            <div class="vital-label">Temperature</div>
+            <div class="vital-value">36.8<span>°C</span></div>
+          </div>
+          <div class="vital-card">
+            <div class="vital-label">Blood pressure</div>
+            <div class="vital-value" style="font-size:1.15rem">118<span>/76</span></div>
+          </div>
+        </div>
+        <div class="mini-graph">
+          <svg viewBox="0 0 300 36" preserveAspectRatio="none">
+            <polyline id="ecg-line"
+              points="0,18 20,18 30,4 40,32 50,18 70,18 80,4 90,32 100,18 120,18 130,4 140,32 150,18 170,18 180,4 190,32 200,18 220,18 230,4 240,32 250,18 270,18 280,4 290,32 300,18"
+              fill="none" stroke="#fb923c" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="device-footer">
+          <span class="ble-badge">BLE connected</span>
+          <span class="epaper-badge">e-paper display</span>
+          <span style="margin-left:auto">Wearable: 84%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ORIGIN -->
+<section class="origin" id="origin">
+  <div class="origin-text">
+    <div class="section-label">The origin</div>
+    <h2>A patient in Puerto Rico. A question that wouldn't let go.</h2>
+    <div class="origin-body">
+      <p>
+        Maxine began inside a hospital bed — literally. Through Volunteers for Medical Engineering and Loyola's Engineering Design Project, our team built a voice-activated bed control system for Dr. Mauricio Lizama's quadriplegic patients in Puerto Rico. Patients who could not press a button. Patients who needed to speak to move.
+      </p>
+      <p>
+        That project answered one question and opened a hundred more. If we could restore voice control to a bed, what else could we restore? Maxine is the answer we're still building: an open, modular monitoring system that gives patients information about their own bodies — and gives caregivers the ability to act.
+      </p>
+      <p>
+        The name Maxine is also the trigger word the original VME device listens for. It felt right to carry that forward.
+      </p>
+    </div>
+  </div>
+  <div class="origin-timeline">
+    <div class="timeline-item">
+      <div>
+        <div class="timeline-dot"></div>
+      </div>
+      <div>
+        <div class="timeline-date">2024 — Loyola University</div>
+        <div class="timeline-title">VME Hospital Bed Project</div>
+        <div class="timeline-desc">Voice-activated bed control system for Dr. Lizama's quadriplegic patients. Prototype delivered and tested.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div>
+        <div class="timeline-dot"></div>
+      </div>
+      <div>
+        <div class="timeline-date">2025 — The question</div>
+        <div class="timeline-title">What comes after the bed?</div>
+        <div class="timeline-desc">The clinical gap becomes clear: patients with limited mobility have no low-cost, open monitoring option for home care.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div>
+        <div class="timeline-dot"></div>
+      </div>
+      <div>
+        <div class="timeline-date">2025 — Design begins</div>
+        <div class="timeline-title">Maxine takes shape</div>
+        <div class="timeline-desc">ESP32 + MicroPython architecture. BLE wearable module. E-paper bedside display. Full vital signs suite.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div>
+        <div class="timeline-dot"></div>
+      </div>
+      <div>
+        <div class="timeline-date">Now — Open source</div>
+        <div class="timeline-title">Path 3: Built for everyone</div>
+        <div class="timeline-desc">Released for research, education, and personal use. Not a medical device. A foundation for the community to build on.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT MAXINE IS -->
+<section class="what" id="what">
+  <div class="what-header">
+    <div class="what-intro">
+      <div class="section-label">What Maxine is</div>
+      <h2>Modular. Wireless. Honest about what it is.</h2>
+      <p>Three principles shape every design decision Maxine makes.</p>
+    </div>
+    <div class="disclaimer">
+      Not a medical device. Not for clinical diagnosis. Maxine is open-source hardware and software for education, research, and personal exploration.
+    </div>
+  </div>
+  <div class="pillars">
+    <div class="pillar fade-up">
+      <div class="pillar-num">01</div>
+      <h3>Restore autonomy through awareness</h3>
+      <p>Patients and caregivers who understand what a body is doing can respond faster, advocate better, and feel less alone. Maxine puts that information where it belongs — at the bedside, in plain language.</p>
+      <div class="pillar-tags">
+        <span class="tag">Heart rate</span>
+        <span class="tag">SpO2</span>
+        <span class="tag">Temperature</span>
+        <span class="tag">Blood pressure</span>
+        <span class="tag">Respiration</span>
+      </div>
+    </div>
+    <div class="pillar fade-up">
+      <div class="pillar-num">02</div>
+      <h3>Democratize the tools of care</h3>
+      <p>A commercial multi-parameter vital signs monitor costs thousands of dollars. The Maxine hardware bill of materials is under $120. Every design choice — ESP32, BLE, e-paper — was made to keep the barrier of entry low.</p>
+      <div class="pillar-tags">
+        <span class="tag">ESP32</span>
+        <span class="tag">MicroPython</span>
+        <span class="tag">BLE wireless</span>
+        <span class="tag">E-paper display</span>
+        <span class="tag">&lt;$120 BOM</span>
+      </div>
+    </div>
+    <div class="pillar fade-up">
+      <div class="pillar-num">03</div>
+      <h3>Build a foundation the community can extend</h3>
+      <p>Maxine is a scaffold, not a finished product. The sensor driver API is designed so new sensors slot in without touching the core. The BLE protocol is documented. The code is yours to fork, teach with, and improve.</p>
+      <div class="pillar-tags">
+        <span class="tag">Open hardware</span>
+        <span class="tag">Open software</span>
+        <span class="tag">CC-BY license</span>
+        <span class="tag">Modular API</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPECS STRIP -->
+<div class="specs">
+  <div class="spec-item">
+    <div class="spec-label">Microcontroller</div>
+    <div class="spec-val">ESP32</div>
+    <div class="spec-sub">WROOM-32E · MicroPython</div>
+  </div>
+  <div class="spec-item">
+    <div class="spec-label">Wireless</div>
+    <div class="spec-val">BLE 4.2</div>
+    <div class="spec-sub">aioble · GATT notifications</div>
+  </div>
+  <div class="spec-item">
+    <div class="spec-label">Display</div>
+    <div class="spec-val">E-paper</div>
+    <div class="spec-sub">Waveshare 4.2" · 400×300</div>
+  </div>
+  <div class="spec-item">
+    <div class="spec-label">Vitals</div>
+    <div class="spec-val">5 signs</div>
+    <div class="spec-sub">HR · SpO2 · Temp · BP · Resp</div>
+  </div>
+  <div class="spec-item">
+    <div class="spec-label">Hardware cost</div>
+    <div class="spec-val">~$120</div>
+    <div class="spec-sub">Full bill of materials</div>
+  </div>
+  <div class="spec-item">
+    <div class="spec-label">License</div>
+    <div class="spec-val">CC-BY</div>
+    <div class="spec-sub">Open source · fork freely</div>
+  </div>
+</div>
+
+<!-- AUDIENCE -->
+<section class="audience" id="audience">
+  <div class="section-label">Who it's for</div>
+  <h2>Three doors into Maxine</h2>
+  <p class="audience-intro">The same open system serves very different people. You don't need to be an engineer to benefit — and you don't need permission to improve it.</p>
+  <div class="audience-cards">
+    <div class="aud-card fade-up">
+      <div class="aud-icon">♡</div>
+      <h3>Caregivers & families</h3>
+      <p>You are at the bedside. You want to know what you're seeing. Maxine gives you a clear, calm display of the vitals that matter — without a medical degree required to read it.</p>
+      <a href="#open-source" class="aud-link">Get started →</a>
+    </div>
+    <div class="aud-card fade-up">
+      <div class="aud-icon">◎</div>
+      <h3>Researchers & engineers</h3>
+      <p>Fork the repo. Swap in a new sensor. Extend the BLE protocol. Build the alert engine. The architecture is designed to be extended by people who know what they're doing.</p>
+      <a href="#open-source" class="aud-link">Read the docs →</a>
+    </div>
+    <div class="aud-card fade-up">
+      <div class="aud-icon">△</div>
+      <h3>Educators & students</h3>
+      <p>Maxine is a complete, real-world medical device project — firmware, hardware, BLE, display, alerts — all documented and open. Build on it. Teach with it. Break it and learn why.</p>
+      <a href="dashboard.html" class="aud-link">Open the lab →</a>
+    </div>
+  </div>
+</section>
+
+<!-- OSS BANNER -->
+<section class="oss-banner" id="open-source">
+  <div class="oss-text">
+    <h2>Everything is open.<br>Nothing is hidden.</h2>
+    <p>All hardware schematics, firmware, documentation, and research notes are published under a Creative Commons Attribution license. Use it. Adapt it. Teach it. Just give credit to where it came from.</p>
+  </div>
+  <div class="oss-actions">
+    <a href="https://github.com" class="btn-light">GitHub repository ↗</a>
+    <a href="dashboard.html" class="btn-outline-light">Research dashboard</a>
+  </div>
+</section>
+
+<!-- DISCLAIMER BAR -->
+<div class="disclaimer-bar">
+  <p>
+    ⚠ Maxine is an open-source educational and research project. It is not a medical device, has not been cleared by the FDA, and is not intended for clinical diagnosis, treatment, or monitoring in any medical setting. All vital signs readings are for personal awareness and research purposes only. Always consult a licensed medical professional for health decisions.
+  </p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Max<span>ine</span></div>
+  <ul class="footer-links">
+    <li><a href="#origin">Origin</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="https://github.com">GitHub</a></li>
+    <li><a href="#">License (CC-BY)</a></li>
+  </ul>
+  <div class="footer-credit">VME · Loyola University · Open source</div>
+</footer>
+
+<script>
+  // Scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => {
+          e.target.classList.add('visible');
+        }, e.target.dataset.delay || 0);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.fade-up').forEach((el, i) => {
+    el.dataset.delay = i * 100;
+    observer.observe(el);
+  });
+
+  document.querySelectorAll('.timeline-item').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.1}s`;
+    observer.observe(el);
+  });
+
+  // Simulated live vitals flicker
+  function randInRange(min, max) {
+    return Math.round(min + Math.random() * (max - min));
+  }
+  setInterval(() => {
+    const hr = document.getElementById('hr-val');
+    const spo2 = document.getElementById('spo2-val');
+    if (hr) hr.innerHTML = `${randInRange(68, 76)}<span>bpm</span>`;
+    if (spo2) spo2.innerHTML = `${randInRange(96, 99)}<span>%</span>`;
+  }, 2800);
+</script>
+</body>
+</html>

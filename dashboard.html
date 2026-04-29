@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maxine — Research Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500&family=Lora:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0f1117;
+    --bg-2:     #161820;
+    --bg-3:     #1d1f2a;
+    --bg-4:     #252838;
+    --border:   rgba(255,255,255,0.07);
+    --border-2: rgba(255,255,255,0.12);
+    --text:     #e8e6e1;
+    --text-2:   #9a9790;
+    --text-3:   #5c5a55;
+    --rust:     #d4612a;
+    --rust-2:   #f07040;
+    --teal:     #2dd4bf;
+    --teal-dim: rgba(45,212,191,0.12);
+    --amber:    #f59e0b;
+    --green:    #4ade80;
+    --red:      #f87171;
+    --blue:     #60a5fa;
+    --purple:   #a78bfa;
+    --mono:     'DM Mono', monospace;
+    --sans:     'Instrument Sans', sans-serif;
+    --serif:    'Lora', Georgia, serif;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 48px 1fr;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    grid-column: 1 / -1;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    gap: 1rem;
+    z-index: 10;
+  }
+  .topbar-logo {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .topbar-logo span { color: var(--rust-2); }
+  .topbar-badge {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.55rem;
+    background: var(--bg-4);
+    border: 1px solid var(--border-2);
+    color: var(--text-2);
+    border-radius: 2px;
+  }
+  .topbar-spacer { flex: 1; }
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--green);
+    letter-spacing: 0.08em;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+  .topbar-time {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-3);
+    letter-spacing: 0.06em;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border);
+  }
+  .back-link {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    transition: color 0.2s, border-color 0.2s;
+    margin-left: 0.5rem;
+  }
+  .back-link:hover { color: var(--rust-2); border-color: var(--rust); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--bg-2);
+    border-right: 1px solid var(--border);
+    padding: 1rem 0;
+    overflow-y: auto;
+  }
+  .nav-section {
+    padding: 0.5rem 1rem 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 1.25rem;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+    font-size: 0.82rem;
+    color: var(--text-2);
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--bg-3); color: var(--text); }
+  .nav-item.active {
+    background: var(--bg-3);
+    border-left-color: var(--rust-2);
+    color: var(--text);
+  }
+  .nav-icon {
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+    opacity: 0.6;
+    font-size: 0.8rem;
+  }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-badge {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    padding: 0.1rem 0.4rem;
+    background: var(--bg-4);
+    border-radius: 10px;
+    color: var(--text-3);
+  }
+  .nav-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.75rem 1rem;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* PANELS — each tab is a section */
+  .panel { display: none; flex-direction: column; flex: 1; }
+  .panel.active { display: flex; }
+
+  .panel-header {
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-2);
+  }
+  .panel-title strong {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    font-style: italic;
+    display: block;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-top: 0.15rem;
+  }
+  .panel-actions { margin-left: auto; display: flex; gap: 0.5rem; }
+  .action-btn {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    padding: 0.4rem 0.85rem;
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+  }
+  .action-btn:hover { background: var(--bg-4); color: var(--text); }
+  .action-btn.primary {
+    background: var(--rust);
+    border-color: var(--rust);
+    color: #fff;
+  }
+  .action-btn.primary:hover { background: var(--rust-2); }
+
+  .panel-body {
+    padding: 1.25rem 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  /* ── LIVE VITALS PANEL ── */
+  .vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+  .vital-tile {
+    background: var(--bg-2);
+    padding: 1rem 1.25rem;
+    position: relative;
+  }
+  .vt-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.5rem;
+  }
+  .vt-value {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+  .vt-unit {
+    font-size: 0.7rem;
+    color: var(--text-3);
+    margin-left: 0.2rem;
+  }
+  .vt-status {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    margin-top: 0.35rem;
+    letter-spacing: 0.06em;
+  }
+  .vt-status.ok { color: var(--green); }
+  .vt-status.warn { color: var(--amber); }
+  .vt-status.err { color: var(--red); }
+  .vt-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--green);
+    opacity: 0.4;
+  }
+  .vt-bar.warn { background: var(--amber); }
+
+  .chart-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+    height: 160px;
+  }
+  .chart-box {
+    background: var(--bg-2);
+    padding: 0.85rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .chart-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.5rem;
+  }
+  canvas { display: block; }
+
+  .ble-status-box {
+    background: var(--bg-2);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .ble-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-2);
+  }
+  .ble-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ble-dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .ble-dot.off { background: var(--text-3); }
+  .ble-meta { margin-left: auto; color: var(--text-3); font-size: 0.6rem; }
+
+  /* ── RESEARCH NOTES ── */
+  .notes-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 1px;
+    background: var(--border);
+    flex: 1;
+    min-height: 0;
+  }
+  .notes-left { background: var(--bg-2); display: flex; flex-direction: column; overflow: hidden; }
+  .notes-right { background: var(--bg-2); overflow-y: auto; }
+
+  .notes-toolbar {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tag-filter {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.15s;
+  }
+  .tag-filter.on { background: var(--rust); border-color: var(--rust); color: #fff; }
+
+  .note-list { overflow-y: auto; flex: 1; }
+  .note-item {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .note-item:hover { background: var(--bg-3); }
+  .note-item.selected { background: var(--bg-3); border-left: 2px solid var(--rust-2); }
+  .note-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+  .note-tag {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 2px;
+    background: var(--bg-4);
+    color: var(--text-2);
+  }
+  .note-tag.finding { background: rgba(45,212,191,0.12); color: var(--teal); }
+  .note-tag.issue { background: rgba(248,113,113,0.1); color: var(--red); }
+  .note-tag.idea { background: rgba(167,139,250,0.1); color: var(--purple); }
+  .note-date {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-3);
+    margin-left: auto;
+  }
+  .note-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .note-preview {
+    font-size: 0.78rem;
+    color: var(--text-2);
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Note editor */
+  .note-editor {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    flex: 1;
+    display: none;
+  }
+  .note-editor.open { display: flex; }
+  .editor-title {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.4rem 0;
+    outline: none;
+    width: 100%;
+  }
+  .editor-body {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.7;
+    padding: 0;
+    outline: none;
+    resize: none;
+    flex: 1;
+    min-height: 200px;
+  }
+
+  /* Notes sidebar */
+  .notes-side-section {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .nss-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.6rem;
+  }
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .stat-row:last-child { border: none; }
+  .stat-val { color: var(--text); }
+
+  /* ── HARDWARE TRACKER ── */
+  .hw-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .hw-table th {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    text-align: left;
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .hw-table td {
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .hw-table tr:hover td { background: var(--bg-3); }
+  .hw-table td:first-child { color: var(--text); font-weight: 500; }
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .status-pill.ordered { background: rgba(245,158,11,0.1); color: var(--amber); }
+  .status-pill.received { background: rgba(96,165,250,0.1); color: var(--blue); }
+  .status-pill.testing { background: rgba(167,139,250,0.1); color: var(--purple); }
+  .status-pill.integrated { background: rgba(74,222,128,0.1); color: var(--green); }
+  .status-pill.issue { background: rgba(248,113,113,0.1); color: var(--red); }
+
+  /* ── CODE CHANGELOG ── */
+  .changelog-list { display: flex; flex-direction: column; gap: 1px; }
+  .cl-item {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    margin-bottom: 1px;
+  }
+  .cl-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+  }
+  .cl-header:hover { background: var(--bg-3); }
+  .cl-version {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--teal);
+    letter-spacing: 0.04em;
+  }
+  .cl-title {
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .cl-date {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text-3);
+    margin-left: auto;
+  }
+  .cl-type {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+  }
+  .cl-type.feat { background: rgba(74,222,128,0.1); color: var(--green); }
+  .cl-type.fix  { background: rgba(248,113,113,0.1); color: var(--red); }
+  .cl-type.arch { background: rgba(167,139,250,0.1); color: var(--purple); }
+  .cl-type.doc  { background: rgba(96,165,250,0.1); color: var(--blue); }
+  .cl-body {
+    padding: 0 1rem 0.85rem 1rem;
+    display: none;
+  }
+  .cl-body.open { display: block; }
+  .cl-changes {
+    list-style: none;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-2);
+    line-height: 1.8;
+  }
+  .cl-changes li::before {
+    content: '→ ';
+    color: var(--text-3);
+  }
+
+  /* ── GRID UTILITIES ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+  .grid-cell {
+    background: var(--bg-2);
+    padding: 1rem 1.25rem;
+  }
+  .cell-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.5rem;
+  }
+  .cell-val {
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .cell-sub {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    margin-top: 0.25rem;
+    line-height: 1.5;
+  }
+
+  /* ── 3D LAB PLACEHOLDER ── */
+  .lab-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    text-align: center;
+    padding: 3rem;
+    margin: 1.25rem;
+    min-height: 300px;
+  }
+  .lab-icon {
+    width: 64px;
+    height: 64px;
+    border: 1px solid var(--border-2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .lab-title {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    font-style: italic;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .lab-desc {
+    font-size: 0.85rem;
+    color: var(--text-2);
+    max-width: 40ch;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+  .lab-roadmap {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .roadmap-item {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border-2);
+    color: var(--text-2);
+    border-radius: 2px;
+  }
+  .roadmap-item.done { border-color: var(--green); color: var(--green); }
+  .roadmap-item.next { border-color: var(--amber); color: var(--amber); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="index.html" class="topbar-logo">Max<span>ine</span></a>
+  <span class="topbar-badge">Research Dashboard · v0.2</span>
+  <div class="topbar-spacer"></div>
+  <div class="live-indicator"><span class="live-dot"></span>Simulated</div>
+  <div class="topbar-time" id="clock">--:--:--</div>
+  <a href="index.html" class="back-link">← Public site</a>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="nav-section">Monitor</div>
+  <div class="nav-item active" data-panel="vitals">
+    <span class="nav-icon">◎</span> Live vitals
+    <span class="nav-badge">Live</span>
+  </div>
+
+  <div class="nav-section">Research</div>
+  <div class="nav-item" data-panel="notes">
+    <span class="nav-icon">✎</span> Notes & findings
+    <span class="nav-badge">4</span>
+  </div>
+  <div class="nav-item" data-panel="hardware">
+    <span class="nav-icon">◈</span> Hardware tracker
+  </div>
+  <div class="nav-item" data-panel="changelog">
+    <span class="nav-icon">⌥</span> Code changelog
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-section">Lab</div>
+  <div class="nav-item" data-panel="lab3d">
+    <span class="nav-icon">△</span> 3D model lab
+    <span class="nav-badge">Soon</span>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-section">Project</div>
+  <div class="nav-item" data-panel="overview">
+    <span class="nav-icon">▦</span> Overview
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ── LIVE VITALS ── -->
+  <section class="panel active" id="panel-vitals">
+    <div class="panel-header">
+      <div class="panel-title">Monitor<strong>Live vitals</strong></div>
+      <div class="panel-actions">
+        <button class="action-btn">Export CSV</button>
+        <button class="action-btn primary">Record session</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="vitals-grid">
+        <div class="vital-tile">
+          <div class="vt-label">Heart rate</div>
+          <div class="vt-value" id="v-hr">72<span class="vt-unit">bpm</span></div>
+          <div class="vt-status ok" id="s-hr">Normal range</div>
+          <div class="vt-bar"></div>
+        </div>
+        <div class="vital-tile">
+          <div class="vt-label">SpO2</div>
+          <div class="vt-value" id="v-spo2">98<span class="vt-unit">%</span></div>
+          <div class="vt-status ok" id="s-spo2">Normal</div>
+          <div class="vt-bar"></div>
+        </div>
+        <div class="vital-tile">
+          <div class="vt-label">Temperature</div>
+          <div class="vt-value" id="v-temp">36.8<span class="vt-unit">°C</span></div>
+          <div class="vt-status ok">Normal</div>
+          <div class="vt-bar"></div>
+        </div>
+        <div class="vital-tile">
+          <div class="vt-label">Blood pressure</div>
+          <div class="vt-value" style="font-size:1.4rem" id="v-bp">118<span class="vt-unit">/76</span></div>
+          <div class="vt-status ok">Normal</div>
+          <div class="vt-bar"></div>
+        </div>
+        <div class="vital-tile">
+          <div class="vt-label">Respiration</div>
+          <div class="vt-value" id="v-resp">14<span class="vt-unit">br/m</span></div>
+          <div class="vt-status ok">Normal</div>
+          <div class="vt-bar"></div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-label">Heart rate — 60 second trace</div>
+          <canvas id="hr-chart" height="110"></canvas>
+        </div>
+        <div class="chart-box ble-status-box">
+          <div class="chart-label">Connection status</div>
+          <div class="ble-row">
+            <span class="ble-dot on"></span>
+            Wearable unit (BLE)
+            <span class="ble-meta">Maxine-W · RSSI -62dBm</span>
+          </div>
+          <div class="ble-row">
+            <span class="ble-dot on"></span>
+            E-paper display
+            <span class="ble-meta">SPI · active</span>
+          </div>
+          <div class="ble-row">
+            <span class="ble-dot on"></span>
+            SD card logging
+            <span class="ble-meta">FAT32 · 1.2MB used</span>
+          </div>
+          <div class="ble-row">
+            <span class="ble-dot off"></span>
+            Alert engine
+            <span class="ble-meta">Not yet built</span>
+          </div>
+          <div style="margin-top:auto; padding-top:0.5rem; border-top: 1px solid var(--border);">
+            <div class="ble-row" style="font-size:0.62rem; color:var(--text-3)">
+              Wearable battery
+              <span class="ble-meta" style="color:var(--green)">84%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NOTES ── -->
+  <section class="panel" id="panel-notes">
+    <div class="panel-header">
+      <div class="panel-title">Research<strong>Notes & findings</strong></div>
+      <div class="panel-actions">
+        <button class="action-btn primary" onclick="openNewNote()">+ New note</button>
+      </div>
+    </div>
+    <div class="notes-layout" style="flex:1; min-height:0;">
+      <div class="notes-left">
+        <div class="notes-toolbar">
+          <span class="tag-filter on" onclick="filterNotes(this, 'all')">All</span>
+          <span class="tag-filter" onclick="filterNotes(this, 'finding')">Findings</span>
+          <span class="tag-filter" onclick="filterNotes(this, 'issue')">Issues</span>
+          <span class="tag-filter" onclick="filterNotes(this, 'idea')">Ideas</span>
+        </div>
+        <div class="note-list" id="note-list">
+          <!-- populated by JS -->
+        </div>
+        <div class="note-editor" id="note-editor">
+          <input class="editor-title" id="editor-title" placeholder="Note title...">
+          <textarea class="editor-body" id="editor-body" placeholder="Write your finding, observation, or idea..."></textarea>
+          <div style="display:flex; gap:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border);">
+            <button class="action-btn primary" onclick="saveNote()">Save note</button>
+            <button class="action-btn" onclick="cancelNote()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="notes-right" id="notes-right">
+        <div class="notes-side-section">
+          <div class="nss-label">Session stats</div>
+          <div class="stat-row">Total notes <span class="stat-val" id="note-count">4</span></div>
+          <div class="stat-row">Findings <span class="stat-val">2</span></div>
+          <div class="stat-row">Issues <span class="stat-val">1</span></div>
+          <div class="stat-row">Ideas <span class="stat-val">1</span></div>
+        </div>
+        <div class="notes-side-section">
+          <div class="nss-label">Recent tags</div>
+          <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.25rem;">
+            <span class="note-tag">BLE</span>
+            <span class="note-tag">MAX30102</span>
+            <span class="note-tag">accuracy</span>
+            <span class="note-tag">e-paper</span>
+            <span class="note-tag">refresh</span>
+            <span class="note-tag">wearable</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HARDWARE ── -->
+  <section class="panel" id="panel-hardware">
+    <div class="panel-header">
+      <div class="panel-title">Research<strong>Hardware tracker</strong></div>
+      <div class="panel-actions">
+        <button class="action-btn">+ Add component</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="two-col" style="margin-bottom:1.25rem;">
+        <div class="grid-cell">
+          <div class="cell-label">BOM total</div>
+          <div class="cell-val">$98.72</div>
+          <div class="cell-sub">13 line items · 3 pending delivery</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">Integration status</div>
+          <div class="cell-val">7 / 13</div>
+          <div class="cell-sub">7 components integrated into firmware · 3 testing · 3 ordered</div>
+        </div>
+      </div>
+      <table class="hw-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Part no.</th>
+            <th>Qty</th>
+            <th>Unit cost</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ESP32-WROOM-32E (bedside)</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">SDATEKIT-32E</td>
+            <td>1</td>
+            <td>$7.00</td>
+            <td><span class="status-pill integrated">Integrated</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Bedside main MCU</td>
+          </tr>
+          <tr>
+            <td>ESP32-WROOM-32E (wearable)</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">SDATEKIT-32E</td>
+            <td>1</td>
+            <td>$7.00</td>
+            <td><span class="status-pill integrated">Integrated</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Wearable BLE peripheral</td>
+          </tr>
+          <tr>
+            <td>MAX30102 pulse oximeter</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">KOOBOOK-30102</td>
+            <td>2</td>
+            <td>$5.00</td>
+            <td><span class="status-pill testing">Testing</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">HR accuracy ±3bpm in tests</td>
+          </tr>
+          <tr>
+            <td>MLX90614 IR temp sensor</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">GY-906-BAA</td>
+            <td>1</td>
+            <td>$8.00</td>
+            <td><span class="status-pill integrated">Integrated</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Non-contact, 0.5°C accuracy</td>
+          </tr>
+          <tr>
+            <td>GY-521 MPU-6050 IMU</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">GY-521-3PK</td>
+            <td>3</td>
+            <td>$3.00</td>
+            <td><span class="status-pill integrated">Integrated</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Respiration via chest IMU</td>
+          </tr>
+          <tr>
+            <td>BP cuff UART module</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">—</td>
+            <td>1</td>
+            <td>$32.00</td>
+            <td><span class="status-pill ordered">Ordered</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Awaiting delivery — driver ready</td>
+          </tr>
+          <tr>
+            <td>Waveshare 4.2" e-paper</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">WS-EPD-4.2</td>
+            <td>1</td>
+            <td>$18.00</td>
+            <td><span class="status-pill testing">Testing</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Partial refresh ghosting under review</td>
+          </tr>
+          <tr>
+            <td>Micro SD card module</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">DIYables-SD</td>
+            <td>1</td>
+            <td>$4.00</td>
+            <td><span class="status-pill integrated">Integrated</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">SPI · FAT32 · logging ready</td>
+          </tr>
+          <tr>
+            <td>32GB micro SD card</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">SanDisk-32C10</td>
+            <td>1</td>
+            <td>$8.00</td>
+            <td><span class="status-pill received">Received</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">FAT32 formatted</td>
+          </tr>
+          <tr>
+            <td>3.7V LiPo 2000mAh (wearable)</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">JST-LIPO-2K</td>
+            <td>1</td>
+            <td>$12.00</td>
+            <td><span class="status-pill ordered">Ordered</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Battery monitoring code ready</td>
+          </tr>
+          <tr>
+            <td>5V 2A USB-C power supply</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">—</td>
+            <td>1</td>
+            <td>$8.00</td>
+            <td><span class="status-pill received">Received</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Bedside unit power</td>
+          </tr>
+          <tr>
+            <td>830pt breadboard + jumper kit</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">ELEGOO-JW</td>
+            <td>1</td>
+            <td>$10.00</td>
+            <td><span class="status-pill integrated">Integrated</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Prototype wiring</td>
+          </tr>
+          <tr>
+            <td>Soldering iron kit</td>
+            <td style="font-family:var(--mono);font-size:0.72rem;">—</td>
+            <td>1</td>
+            <td>$15.00</td>
+            <td><span class="status-pill received">Received</span></td>
+            <td style="font-size:0.78rem;color:var(--text-3)">Header pins on sensors</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── CHANGELOG ── -->
+  <section class="panel" id="panel-changelog">
+    <div class="panel-header">
+      <div class="panel-title">Research<strong>Code changelog</strong></div>
+      <div class="panel-actions">
+        <button class="action-btn primary">+ Log change</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="changelog-list" id="changelog"></div>
+    </div>
+  </section>
+
+  <!-- ── 3D LAB ── -->
+  <section class="panel" id="panel-lab3d">
+    <div class="panel-header">
+      <div class="panel-title">Lab<strong>3D model & simulation</strong></div>
+    </div>
+    <div class="lab-placeholder">
+      <div class="lab-icon">△</div>
+      <div class="lab-title">Interactive 3D lab</div>
+      <p class="lab-desc">
+        The plan: an in-browser 3D model of Maxine with swappable modular parts. Click a sensor to see its datasheet, test different configurations, and simulate readings — all without physical hardware.
+      </p>
+      <div class="lab-roadmap">
+        <span class="roadmap-item done">Sensor drivers ✓</span>
+        <span class="roadmap-item done">BLE protocol ✓</span>
+        <span class="roadmap-item done">E-paper display ✓</span>
+        <span class="roadmap-item next">3D bedside model</span>
+        <span class="roadmap-item">Modular part swap</span>
+        <span class="roadmap-item">Simulated readings</span>
+        <span class="roadmap-item">Student sandbox</span>
+        <span class="roadmap-item">Export to STL</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── OVERVIEW ── -->
+  <section class="panel" id="panel-overview">
+    <div class="panel-header">
+      <div class="panel-title">Project<strong>Overview</strong></div>
+    </div>
+    <div class="panel-body">
+      <div class="two-col">
+        <div class="grid-cell">
+          <div class="cell-label">Project status</div>
+          <div class="cell-val" style="color:var(--amber)">Active</div>
+          <div class="cell-sub">Sensor layer complete · BLE + display built · Alert engine next</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">Open source license</div>
+          <div class="cell-val">CC-BY 4.0</div>
+          <div class="cell-sub">Free for research, education, personal use · Attribution required</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="grid-cell">
+          <div class="cell-label">Regulatory path</div>
+          <div class="cell-val">Path 3</div>
+          <div class="cell-sub">Not a medical device · No FDA filing · Education & research use only</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">Total lines of firmware</div>
+          <div class="cell-val">2,060</div>
+          <div class="cell-sub">13 files · MicroPython · ESP32 WROOM-32E</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="grid-cell">
+          <div class="cell-label">Sponsor</div>
+          <div class="cell-val" style="font-size:1rem">VME</div>
+          <div class="cell-sub">Volunteers for Medical Engineering · Dr. Mauricio Lizama, Puerto Rico</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">Origin project</div>
+          <div class="cell-val" style="font-size:1rem">EG 497/498</div>
+          <div class="cell-sub">Loyola University Engineering Design · Voice-activated hospital bed</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US', { hour12: false });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── NAV ──
+document.querySelectorAll('.nav-item[data-panel]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const target = item.dataset.panel;
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`panel-${target}`)?.classList.add('active');
+  });
+});
+
+// ── LIVE VITALS SIMULATION ──
+const hrHistory = Array.from({length: 60}, () => 70 + Math.random() * 10);
+
+function randNear(val, spread) {
+  return Math.round((val + (Math.random() - 0.5) * spread) * 10) / 10;
+}
+
+function updateVitals() {
+  const hr = Math.round(randNear(72, 6));
+  hrHistory.shift();
+  hrHistory.push(hr);
+
+  document.getElementById('v-hr').innerHTML = `${hr}<span class="vt-unit">bpm</span>`;
+  document.getElementById('v-spo2').innerHTML = `${randNear(98, 2).toFixed(0)}<span class="vt-unit">%</span>`;
+  document.getElementById('v-temp').innerHTML = `${randNear(36.8, 0.4).toFixed(1)}<span class="vt-unit">°C</span>`;
+  drawHRChart();
+}
+
+setInterval(updateVitals, 2000);
+
+// ── HR CHART ──
+function drawHRChart() {
+  const canvas = document.getElementById('hr-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth - 32;
+  canvas.height = 110;
+  const w = canvas.width, h = canvas.height;
+  const min = 50, max = 110;
+  ctx.clearRect(0, 0, w, h);
+
+  // grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = Math.round(h * i / 4) + 0.5;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+
+  // line
+  ctx.beginPath();
+  ctx.strokeStyle = '#f07040';
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  hrHistory.forEach((val, i) => {
+    const x = (i / (hrHistory.length - 1)) * w;
+    const y = h - ((val - min) / (max - min)) * h;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // fill
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = 'rgba(240,112,64,0.06)';
+  ctx.fill();
+}
+
+window.addEventListener('resize', drawHRChart);
+drawHRChart();
+
+// ── NOTES ──
+let notes = [
+  { id: 1, tag: 'finding', title: 'MAX30102 accuracy within ±3bpm', date: '2025-04-18', body: 'Tested the MAX30102 sensor against a commercial pulse oximeter. Readings are within ±3bpm at rest. Under motion the error increases to ±8bpm. Need to improve the peak detection algorithm — the current zero-crossing approach is sensitive to noise.' },
+  { id: 2, tag: 'issue', title: 'E-paper ghosting after 8 partial refreshes', date: '2025-04-19', body: 'The Waveshare 4.2" display shows visible ghosting after approximately 8 consecutive partial refreshes. Currently forcing a full refresh every 10 draws. May need to reduce to every 6. Full refresh takes 4.1s on average — acceptable for vitals display.' },
+  { id: 3, tag: 'finding', title: 'BLE reconnect time < 3s after sleep', date: '2025-04-20', body: 'After the wearable unit enters deep sleep and wakes, BLE reconnection to the bedside central takes an average of 2.8 seconds. This is acceptable for our use case. aioble scan timeout set to 10s — never hit in testing.' },
+  { id: 4, tag: 'idea', title: 'Haptic feedback on wearable for alerts', date: '2025-04-21', body: 'Idea: add a small haptic vibration motor to the wearable module so the patient gets tactile feedback when an alert fires — especially important for patients with limited vision or hearing. Small 3V coin vibration motor would fit on the wrist PCB.' },
+];
+let activeFilter = 'all';
+let editingNote = null;
+
+function renderNotes() {
+  const list = document.getElementById('note-list');
+  const filtered = activeFilter === 'all' ? notes : notes.filter(n => n.tag === activeFilter);
+  list.innerHTML = filtered.map(n => `
+    <div class="note-item" onclick="selectNote(${n.id})">
+      <div class="note-meta">
+        <span class="note-tag ${n.tag}">${n.tag}</span>
+        <span class="note-date">${n.date}</span>
+      </div>
+      <div class="note-title">${n.title}</div>
+      <div class="note-preview">${n.body}</div>
+    </div>
+  `).join('');
+  document.getElementById('note-count').textContent = notes.length;
+}
+
+function filterNotes(el, tag) {
+  document.querySelectorAll('.tag-filter').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  activeFilter = tag;
+  renderNotes();
+}
+
+function selectNote(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  document.querySelectorAll('.note-item').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  const editor = document.getElementById('note-editor');
+  const list = document.getElementById('note-list');
+  editor.classList.add('open');
+  list.style.display = 'none';
+  document.getElementById('editor-title').value = note.title;
+  document.getElementById('editor-body').value = note.body;
+  editingNote = id;
+}
+
+function openNewNote() {
+  const editor = document.getElementById('note-editor');
+  const list = document.getElementById('note-list');
+  editor.classList.add('open');
+  list.style.display = 'none';
+  document.getElementById('editor-title').value = '';
+  document.getElementById('editor-body').value = '';
+  editingNote = null;
+}
+
+function saveNote() {
+  const title = document.getElementById('editor-title').value.trim();
+  const body = document.getElementById('editor-body').value.trim();
+  if (!title) return;
+  if (editingNote) {
+    const note = notes.find(n => n.id === editingNote);
+    if (note) { note.title = title; note.body = body; }
+  } else {
+    const today = new Date().toISOString().slice(0, 10);
+    notes.unshift({ id: Date.now(), tag: 'finding', title, date: today, body });
+  }
+  cancelNote();
+}
+
+function cancelNote() {
+  document.getElementById('note-editor').classList.remove('open');
+  document.getElementById('note-list').style.display = '';
+  editingNote = null;
+  renderNotes();
+}
+
+renderNotes();
+
+// ── CHANGELOG ──
+const changelog = [
+  {
+    version: 'v0.2.0',
+    title: 'BLE two-unit architecture + e-paper display',
+    date: '2025-04-21',
+    type: 'arch',
+    changes: [
+      'Split into wearable peripheral + bedside central architecture',
+      'Added aioble BLE stack: ble_peripheral.py + ble_central.py',
+      'Defined shared BLE protocol in shared/ble_protocol.py (UUIDs + struct encoding)',
+      'Replaced OLED with Waveshare 4.2" e-paper (epaper.py)',
+      'Bedside main.py: async gather of wired sensors + BLE + display + logging',
+      'Wearable main.py: sensor bridge + battery monitoring + BLE advertising',
+    ]
+  },
+  {
+    version: 'v0.1.1',
+    title: 'Regulatory review — Path 3 decision',
+    date: '2025-04-20',
+    type: 'doc',
+    changes: [
+      'Documented FDA Class II classification implications for multi-parameter vitals monitor',
+      'HIPAA analysis: device manufacturer not a covered entity unless data shared with clinical systems',
+      'Confirmed Path 3: open source for research, education, personal use only',
+      'Added NOT FOR MEDICAL USE disclaimers to all public-facing materials',
+    ]
+  },
+  {
+    version: 'v0.1.0',
+    title: 'Initial sensor driver layer',
+    date: '2025-04-18',
+    type: 'feat',
+    changes: [
+      'BaseSensor abstract class with safe_read(), initialize(), healthy() contract',
+      'HeartRateSensor: MAX30102 FIFO drain, peak detection, SpO2 Beer-Lambert',
+      'TemperatureSensor: MLX90614 non-contact IR, shared I2C bus injection',
+      'BloodPressureSensor: oscillometric UART cuff, KT-80x packet parser',
+      'RespirationSensor: MPU-6050 IMU or ADC strain gauge, zero-crossing rate',
+      'SensorManager: register, boot, tick, dispatch pattern',
+    ]
+  },
+  {
+    version: 'v0.0.1',
+    title: 'Project scaffolded from VME hospital bed work',
+    date: '2025-04-15',
+    type: 'feat',
+    changes: [
+      'ESP32-WROOM-32E selected as MCU (MicroPython, BLE, WiFi built-in)',
+      'Sensor architecture designed: one driver per sensor, BaseSensor contract',
+      'Hardware BOM finalized: <$120 total',
+      'Project named Maxine after VME bed trigger word',
+    ]
+  },
+];
+
+function renderChangelog() {
+  const el = document.getElementById('changelog');
+  el.innerHTML = changelog.map((entry, i) => `
+    <div class="cl-item">
+      <div class="cl-header" onclick="toggleCL(${i})">
+        <span class="cl-version">${entry.version}</span>
+        <span class="cl-type ${entry.type}">${entry.type}</span>
+        <span class="cl-title">${entry.title}</span>
+        <span class="cl-date">${entry.date}</span>
+      </div>
+      <div class="cl-body" id="cl-${i}">
+        <ul class="cl-changes">
+          ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `).join('');
+  // Open first by default
+  document.getElementById('cl-0')?.classList.add('open');
+}
+
+function toggleCL(i) {
+  const body = document.getElementById(`cl-${i}`);
+  body.classList.toggle('open');
+}
+
+renderChangelog();
+</script>
+</body>
+</html>
