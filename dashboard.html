@@ -182,7 +182,6 @@
     flex-direction: column;
   }
 
-  /* PANELS — each tab is a section */
   .panel { display: none; flex-direction: column; flex: 1; }
   .panel.active { display: flex; }
 
@@ -679,6 +678,142 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+  /* ── AUTH ── */
+  body:not(.auth-ok) .edit-only { display: none !important; }
+  body:not(.auth-ok) .editor-title,
+  body:not(.auth-ok) .editor-body { pointer-events: none; opacity: 0.5; }
+
+  .auth-btn {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: var(--text-3);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-left: 0.5rem;
+  }
+  .auth-btn:hover { color: var(--teal); border-color: var(--teal); }
+  body.auth-ok .auth-btn { color: var(--green); border-color: rgba(74,222,128,0.3); }
+  body.auth-ok .auth-btn:hover { color: var(--red); border-color: rgba(248,113,113,0.3); }
+
+  /* ── OVERLAYS / MODALS ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,17,23,0.85);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-box {
+    background: var(--bg-2);
+    border: 1px solid var(--border-2);
+    padding: 2rem;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .modal-box.wide { width: 460px; }
+  .modal-title {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text);
+  }
+  .modal-sub {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-3);
+    letter-spacing: 0.06em;
+    margin-top: 0.35rem;
+  }
+  .modal-input {
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.6rem 0.85rem;
+    outline: none;
+    width: 100%;
+    border-radius: 2px;
+  }
+  .modal-input:focus { border-color: var(--rust); }
+  .modal-select {
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 0.6rem 0.85rem;
+    outline: none;
+    width: 100%;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .modal-select:focus { border-color: var(--rust); }
+  .modal-textarea {
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    padding: 0.6rem 0.85rem;
+    outline: none;
+    width: 100%;
+    border-radius: 2px;
+    resize: vertical;
+    min-height: 90px;
+  }
+  .modal-textarea:focus { border-color: var(--rust); }
+  .modal-err {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--red);
+    letter-spacing: 0.06em;
+    display: none;
+    margin-top: -0.5rem;
+  }
+  .modal-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  .modal-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  .modal-field { display: flex; flex-direction: column; }
+  .modal-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  /* editor tag select */
+  .editor-tag-select {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+    align-self: flex-start;
+  }
+  .editor-tag-select:focus { border-color: var(--rust); }
 </style>
 </head>
 <body>
@@ -691,7 +826,137 @@
   <div class="live-indicator"><span class="live-dot"></span>Simulated</div>
   <div class="topbar-time" id="clock">--:--:--</div>
   <a href="index.html" class="back-link">← Public site</a>
+  <button class="auth-btn" id="auth-btn" onclick="toggleAuth()">Login</button>
 </header>
+
+<!-- LOGIN OVERLAY -->
+<div class="overlay" id="login-overlay">
+  <div class="modal-box">
+    <div>
+      <div class="modal-title">Dashboard access</div>
+      <div class="modal-sub">Read-only until authenticated</div>
+    </div>
+    <input class="modal-input" id="login-email" type="email" placeholder="Email"
+      onkeydown="if(event.key==='Enter') document.getElementById('login-pass').focus()">
+    <input class="modal-input" id="login-pass" type="password" placeholder="Password"
+      onkeydown="if(event.key==='Enter') attemptLogin()">
+    <div class="modal-err" id="login-err"></div>
+    <div class="modal-row">
+      <button class="action-btn" onclick="closeLogin()">Cancel</button>
+      <button class="action-btn primary" onclick="attemptLogin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- SET PASSWORD OVERLAY (shown after clicking an invite link) -->
+<div class="overlay" id="setpw-overlay">
+  <div class="modal-box">
+    <div>
+      <div class="modal-title">Welcome to Maxine</div>
+      <div class="modal-sub">Set a password for your account</div>
+    </div>
+    <input class="modal-input" id="setpw-input" type="password" placeholder="New password (8+ characters)"
+      onkeydown="if(event.key==='Enter') document.getElementById('setpw-confirm').focus()">
+    <input class="modal-input" id="setpw-confirm" type="password" placeholder="Confirm password"
+      onkeydown="if(event.key==='Enter') confirmSetPassword()">
+    <div class="modal-err" id="setpw-err"></div>
+    <div class="modal-row">
+      <button class="action-btn primary" onclick="confirmSetPassword()">Set password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD COMPONENT OVERLAY -->
+<div class="overlay" id="hw-modal">
+  <div class="modal-box wide">
+    <div>
+      <div class="modal-title">Add component</div>
+      <div class="modal-sub">Hardware BOM entry</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Component name *</div>
+      <input class="modal-input" id="hw-name" placeholder="e.g. MAX30102 pulse oximeter"
+        onkeydown="if(event.key==='Enter') submitComponent()">
+    </div>
+    <div class="modal-2col">
+      <div class="modal-field">
+        <div class="modal-label">Part no.</div>
+        <input class="modal-input" id="hw-part" placeholder="e.g. KOOBOOK-30102">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Qty</div>
+        <input class="modal-input" id="hw-qty" type="number" value="1" min="1">
+      </div>
+    </div>
+    <div class="modal-2col">
+      <div class="modal-field">
+        <div class="modal-label">Unit cost ($)</div>
+        <input class="modal-input" id="hw-cost" type="number" step="0.01" placeholder="0.00">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Status</div>
+        <select class="modal-select" id="hw-status">
+          <option value="ordered">ordered</option>
+          <option value="received">received</option>
+          <option value="testing">testing</option>
+          <option value="integrated">integrated</option>
+          <option value="issue">issue</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Notes</div>
+      <input class="modal-input" id="hw-notes" placeholder="Short note...">
+    </div>
+    <div class="modal-err" id="hw-err"></div>
+    <div class="modal-row">
+      <button class="action-btn" onclick="closeAddComponent()">Cancel</button>
+      <button class="action-btn primary" onclick="submitComponent()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CHANGELOG ENTRY OVERLAY -->
+<div class="overlay" id="cl-modal">
+  <div class="modal-box wide">
+    <div>
+      <div class="modal-title">Log change</div>
+      <div class="modal-sub">Add a changelog entry</div>
+    </div>
+    <div class="modal-2col">
+      <div class="modal-field">
+        <div class="modal-label">Version *</div>
+        <input class="modal-input" id="cl-version" placeholder="e.g. v0.3.0">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Type</div>
+        <select class="modal-select" id="cl-type">
+          <option value="feat">feat</option>
+          <option value="fix">fix</option>
+          <option value="arch">arch</option>
+          <option value="doc">doc</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Title *</div>
+      <input class="modal-input" id="cl-title" placeholder="Short description of this release">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Date</div>
+      <input class="modal-input" id="cl-date" type="date">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Changes (one per line)</div>
+      <textarea class="modal-textarea" id="cl-changes" placeholder="Added X&#10;Fixed Y&#10;Refactored Z"></textarea>
+    </div>
+    <div class="modal-err" id="cl-err"></div>
+    <div class="modal-row">
+      <button class="action-btn" onclick="closeAddChangelog()">Cancel</button>
+      <button class="action-btn primary" onclick="submitChangelog()">Add entry</button>
+    </div>
+  </div>
+</div>
 
 <!-- SIDEBAR -->
 <nav class="sidebar">
@@ -704,7 +969,7 @@
   <div class="nav-section">Research</div>
   <div class="nav-item" data-panel="notes">
     <span class="nav-icon">✎</span> Notes & findings
-    <span class="nav-badge">4</span>
+    <span class="nav-badge" id="notes-nav-badge">—</span>
   </div>
   <div class="nav-item" data-panel="hardware">
     <span class="nav-icon">◈</span> Hardware tracker
@@ -735,8 +1000,8 @@
     <div class="panel-header">
       <div class="panel-title">Monitor<strong>Live vitals</strong></div>
       <div class="panel-actions">
-        <button class="action-btn">Export CSV</button>
-        <button class="action-btn primary">Record session</button>
+        <button class="action-btn edit-only">Export CSV</button>
+        <button class="action-btn primary edit-only">Record session</button>
       </div>
     </div>
     <div class="panel-body">
@@ -816,7 +1081,7 @@
     <div class="panel-header">
       <div class="panel-title">Research<strong>Notes & findings</strong></div>
       <div class="panel-actions">
-        <button class="action-btn primary" onclick="openNewNote()">+ New note</button>
+        <button class="action-btn primary edit-only" onclick="openNewNote()">+ New note</button>
       </div>
     </div>
     <div class="notes-layout" style="flex:1; min-height:0;">
@@ -828,24 +1093,31 @@
           <span class="tag-filter" onclick="filterNotes(this, 'idea')">Ideas</span>
         </div>
         <div class="note-list" id="note-list">
-          <!-- populated by JS -->
+          <div style="padding:1rem;font-family:var(--mono);font-size:0.72rem;color:var(--text-3)">Loading…</div>
         </div>
         <div class="note-editor" id="note-editor">
+          <select class="editor-tag-select" id="editor-tag">
+            <option value="finding">finding</option>
+            <option value="issue">issue</option>
+            <option value="idea">idea</option>
+          </select>
           <input class="editor-title" id="editor-title" placeholder="Note title...">
           <textarea class="editor-body" id="editor-body" placeholder="Write your finding, observation, or idea..."></textarea>
-          <div style="display:flex; gap:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border);">
-            <button class="action-btn primary" onclick="saveNote()">Save note</button>
-            <button class="action-btn" onclick="cancelNote()">Cancel</button>
+          <div style="display:flex; gap:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border); align-items:center;">
+            <button class="action-btn edit-only" id="delete-note-btn" onclick="deleteNote()"
+              style="margin-right:auto;color:var(--red);border-color:rgba(248,113,113,0.3)">Delete</button>
+            <button class="action-btn primary edit-only" onclick="saveNote()">Save note</button>
+            <button class="action-btn" onclick="cancelNote()">Close</button>
           </div>
         </div>
       </div>
       <div class="notes-right" id="notes-right">
         <div class="notes-side-section">
           <div class="nss-label">Session stats</div>
-          <div class="stat-row">Total notes <span class="stat-val" id="note-count">4</span></div>
-          <div class="stat-row">Findings <span class="stat-val">2</span></div>
-          <div class="stat-row">Issues <span class="stat-val">1</span></div>
-          <div class="stat-row">Ideas <span class="stat-val">1</span></div>
+          <div class="stat-row">Total notes <span class="stat-val" id="note-count">—</span></div>
+          <div class="stat-row">Findings <span class="stat-val" id="note-count-finding">—</span></div>
+          <div class="stat-row">Issues <span class="stat-val" id="note-count-issue">—</span></div>
+          <div class="stat-row">Ideas <span class="stat-val" id="note-count-idea">—</span></div>
         </div>
         <div class="notes-side-section">
           <div class="nss-label">Recent tags</div>
@@ -867,20 +1139,20 @@
     <div class="panel-header">
       <div class="panel-title">Research<strong>Hardware tracker</strong></div>
       <div class="panel-actions">
-        <button class="action-btn">+ Add component</button>
+        <button class="action-btn edit-only" onclick="openAddComponent()">+ Add component</button>
       </div>
     </div>
     <div class="panel-body">
       <div class="two-col" style="margin-bottom:1.25rem;">
         <div class="grid-cell">
           <div class="cell-label">BOM total</div>
-          <div class="cell-val">$98.72</div>
-          <div class="cell-sub">13 line items · 3 pending delivery</div>
+          <div class="cell-val" id="hw-bom-total">—</div>
+          <div class="cell-sub" id="hw-bom-sub">Loading…</div>
         </div>
         <div class="grid-cell">
           <div class="cell-label">Integration status</div>
-          <div class="cell-val">7 / 13</div>
-          <div class="cell-sub">7 components integrated into firmware · 3 testing · 3 ordered</div>
+          <div class="cell-val" id="hw-integration">—</div>
+          <div class="cell-sub" id="hw-int-sub">Loading…</div>
         </div>
       </div>
       <table class="hw-table">
@@ -894,111 +1166,8 @@
             <th>Notes</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>ESP32-WROOM-32E (bedside)</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">SDATEKIT-32E</td>
-            <td>1</td>
-            <td>$7.00</td>
-            <td><span class="status-pill integrated">Integrated</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Bedside main MCU</td>
-          </tr>
-          <tr>
-            <td>ESP32-WROOM-32E (wearable)</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">SDATEKIT-32E</td>
-            <td>1</td>
-            <td>$7.00</td>
-            <td><span class="status-pill integrated">Integrated</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Wearable BLE peripheral</td>
-          </tr>
-          <tr>
-            <td>MAX30102 pulse oximeter</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">KOOBOOK-30102</td>
-            <td>2</td>
-            <td>$5.00</td>
-            <td><span class="status-pill testing">Testing</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">HR accuracy ±3bpm in tests</td>
-          </tr>
-          <tr>
-            <td>MLX90614 IR temp sensor</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">GY-906-BAA</td>
-            <td>1</td>
-            <td>$8.00</td>
-            <td><span class="status-pill integrated">Integrated</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Non-contact, 0.5°C accuracy</td>
-          </tr>
-          <tr>
-            <td>GY-521 MPU-6050 IMU</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">GY-521-3PK</td>
-            <td>3</td>
-            <td>$3.00</td>
-            <td><span class="status-pill integrated">Integrated</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Respiration via chest IMU</td>
-          </tr>
-          <tr>
-            <td>BP cuff UART module</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">—</td>
-            <td>1</td>
-            <td>$32.00</td>
-            <td><span class="status-pill ordered">Ordered</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Awaiting delivery — driver ready</td>
-          </tr>
-          <tr>
-            <td>Waveshare 4.2" e-paper</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">WS-EPD-4.2</td>
-            <td>1</td>
-            <td>$18.00</td>
-            <td><span class="status-pill testing">Testing</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Partial refresh ghosting under review</td>
-          </tr>
-          <tr>
-            <td>Micro SD card module</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">DIYables-SD</td>
-            <td>1</td>
-            <td>$4.00</td>
-            <td><span class="status-pill integrated">Integrated</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">SPI · FAT32 · logging ready</td>
-          </tr>
-          <tr>
-            <td>32GB micro SD card</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">SanDisk-32C10</td>
-            <td>1</td>
-            <td>$8.00</td>
-            <td><span class="status-pill received">Received</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">FAT32 formatted</td>
-          </tr>
-          <tr>
-            <td>3.7V LiPo 2000mAh (wearable)</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">JST-LIPO-2K</td>
-            <td>1</td>
-            <td>$12.00</td>
-            <td><span class="status-pill ordered">Ordered</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Battery monitoring code ready</td>
-          </tr>
-          <tr>
-            <td>5V 2A USB-C power supply</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">—</td>
-            <td>1</td>
-            <td>$8.00</td>
-            <td><span class="status-pill received">Received</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Bedside unit power</td>
-          </tr>
-          <tr>
-            <td>830pt breadboard + jumper kit</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">ELEGOO-JW</td>
-            <td>1</td>
-            <td>$10.00</td>
-            <td><span class="status-pill integrated">Integrated</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Prototype wiring</td>
-          </tr>
-          <tr>
-            <td>Soldering iron kit</td>
-            <td style="font-family:var(--mono);font-size:0.72rem;">—</td>
-            <td>1</td>
-            <td>$15.00</td>
-            <td><span class="status-pill received">Received</span></td>
-            <td style="font-size:0.78rem;color:var(--text-3)">Header pins on sensors</td>
-          </tr>
+        <tbody id="hw-tbody">
+          <tr><td colspan="6" style="color:var(--text-3);font-family:var(--mono);font-size:0.72rem;">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1009,11 +1178,13 @@
     <div class="panel-header">
       <div class="panel-title">Research<strong>Code changelog</strong></div>
       <div class="panel-actions">
-        <button class="action-btn primary">+ Log change</button>
+        <button class="action-btn primary edit-only" onclick="openAddChangelog()">+ Log change</button>
       </div>
     </div>
     <div class="panel-body">
-      <div class="changelog-list" id="changelog"></div>
+      <div class="changelog-list" id="changelog">
+        <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-3)">Loading…</div>
+      </div>
     </div>
   </section>
 
@@ -1088,12 +1259,96 @@
 
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG  ← paste your values from Supabase → Settings → API
+// ─────────────────────────────────────────────────────────────────────────────
+const SUPABASE_URL      = 'https://agekvrkqrwepdoeetpbx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnZWt2cmtxcndlcGRvZWV0cGJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTIyNzcsImV4cCI6MjA4OTg2ODI3N30.u4aiolovNsIbLRtuYrjOeADv7k2rBY3wVRN1m10OFoU';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── DETECT INVITE BEFORE SUPABASE CLEARS URL HASH ──
+const _hp = new URLSearchParams(window.location.hash.slice(1));
+const _isInvite = _hp.get('type') === 'invite';
+
+// ── AUTH ──
+let authOk = false;
+
+sb.auth.onAuthStateChange((event, session) => {
+  authOk = !!session;
+  applyAuth();
+  if (_isInvite && event === 'SIGNED_IN') showSetPassword();
+});
+
+function applyAuth() {
+  document.body.classList.toggle('auth-ok', authOk);
+  const btn = document.getElementById('auth-btn');
+  if (btn) btn.textContent = authOk ? 'Lock' : 'Login';
+  const editorTitle = document.getElementById('editor-title');
+  const editorBody  = document.getElementById('editor-body');
+  const editorTag   = document.getElementById('editor-tag');
+  if (editorTitle) editorTitle.readOnly = !authOk;
+  if (editorBody)  editorBody.readOnly  = !authOk;
+  if (editorTag)   editorTag.disabled   = !authOk;
+}
+
+async function toggleAuth() {
+  if (authOk) {
+    await sb.auth.signOut();
+  } else {
+    document.getElementById('login-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('login-email').focus(), 50);
+  }
+}
+
+function closeLogin() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value  = '';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+async function attemptLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) return;
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    const el = document.getElementById('login-err');
+    el.textContent = error.message;
+    el.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  } else {
+    closeLogin();
+  }
+}
+
+// ── SET PASSWORD (invite flow) ──
+function showSetPassword() {
+  document.getElementById('setpw-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('setpw-input').focus(), 50);
+}
+
+async function confirmSetPassword() {
+  const pw  = document.getElementById('setpw-input').value;
+  const pw2 = document.getElementById('setpw-confirm').value;
+  const err = document.getElementById('setpw-err');
+  err.style.display = 'none';
+  if (pw.length < 8) { err.textContent = 'Password must be at least 8 characters'; err.style.display = 'block'; return; }
+  if (pw !== pw2)    { err.textContent = 'Passwords do not match'; err.style.display = 'block'; return; }
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) { err.textContent = error.message; err.style.display = 'block'; return; }
+  document.getElementById('setpw-overlay').style.display = 'none';
+  history.replaceState(null, '', window.location.pathname);
+}
+
 // ── CLOCK ──
 function updateClock() {
-  const now = new Date();
   document.getElementById('clock').textContent =
-    now.toLocaleTimeString('en-US', { hour12: false });
+    new Date().toLocaleTimeString('en-US', { hour12: false });
 }
 updateClock();
 setInterval(updateClock, 1000);
@@ -1120,35 +1375,28 @@ function updateVitals() {
   const hr = Math.round(randNear(72, 6));
   hrHistory.shift();
   hrHistory.push(hr);
-
-  document.getElementById('v-hr').innerHTML = `${hr}<span class="vt-unit">bpm</span>`;
+  document.getElementById('v-hr').innerHTML   = `${hr}<span class="vt-unit">bpm</span>`;
   document.getElementById('v-spo2').innerHTML = `${randNear(98, 2).toFixed(0)}<span class="vt-unit">%</span>`;
   document.getElementById('v-temp').innerHTML = `${randNear(36.8, 0.4).toFixed(1)}<span class="vt-unit">°C</span>`;
   drawHRChart();
 }
-
 setInterval(updateVitals, 2000);
 
-// ── HR CHART ──
 function drawHRChart() {
   const canvas = document.getElementById('hr-chart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  canvas.width = canvas.parentElement.clientWidth - 32;
+  canvas.width  = canvas.parentElement.clientWidth - 32;
   canvas.height = 110;
   const w = canvas.width, h = canvas.height;
   const min = 50, max = 110;
   ctx.clearRect(0, 0, w, h);
-
-  // grid lines
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = Math.round(h * i / 4) + 0.5;
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   }
-
-  // line
   ctx.beginPath();
   ctx.strokeStyle = '#f07040';
   ctx.lineWidth = 1.5;
@@ -1159,40 +1407,49 @@ function drawHRChart() {
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.stroke();
-
-  // fill
   ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
   ctx.fillStyle = 'rgba(240,112,64,0.06)';
   ctx.fill();
 }
-
 window.addEventListener('resize', drawHRChart);
 drawHRChart();
 
 // ── NOTES ──
-let notes = [
-  { id: 1, tag: 'finding', title: 'MAX30102 accuracy within ±3bpm', date: '2025-04-18', body: 'Tested the MAX30102 sensor against a commercial pulse oximeter. Readings are within ±3bpm at rest. Under motion the error increases to ±8bpm. Need to improve the peak detection algorithm — the current zero-crossing approach is sensitive to noise.' },
-  { id: 2, tag: 'issue', title: 'E-paper ghosting after 8 partial refreshes', date: '2025-04-19', body: 'The Waveshare 4.2" display shows visible ghosting after approximately 8 consecutive partial refreshes. Currently forcing a full refresh every 10 draws. May need to reduce to every 6. Full refresh takes 4.1s on average — acceptable for vitals display.' },
-  { id: 3, tag: 'finding', title: 'BLE reconnect time < 3s after sleep', date: '2025-04-20', body: 'After the wearable unit enters deep sleep and wakes, BLE reconnection to the bedside central takes an average of 2.8 seconds. This is acceptable for our use case. aioble scan timeout set to 10s — never hit in testing.' },
-  { id: 4, tag: 'idea', title: 'Haptic feedback on wearable for alerts', date: '2025-04-21', body: 'Idea: add a small haptic vibration motor to the wearable module so the patient gets tactile feedback when an alert fires — especially important for patients with limited vision or hearing. Small 3V coin vibration motor would fit on the wrist PCB.' },
-];
+let notes = [];
 let activeFilter = 'all';
-let editingNote = null;
+let editingNoteId = null;
+
+async function loadNotes() {
+  const { data, error } = await sb
+    .from('maxine_notes')
+    .select('*')
+    .order('note_date', { ascending: false });
+  if (error) { console.error('loadNotes:', error); return; }
+  notes = data;
+  renderNotes();
+}
 
 function renderNotes() {
-  const list = document.getElementById('note-list');
+  const list     = document.getElementById('note-list');
   const filtered = activeFilter === 'all' ? notes : notes.filter(n => n.tag === activeFilter);
-  list.innerHTML = filtered.map(n => `
-    <div class="note-item" onclick="selectNote(${n.id})">
-      <div class="note-meta">
-        <span class="note-tag ${n.tag}">${n.tag}</span>
-        <span class="note-date">${n.date}</span>
-      </div>
-      <div class="note-title">${n.title}</div>
-      <div class="note-preview">${n.body}</div>
-    </div>
-  `).join('');
-  document.getElementById('note-count').textContent = notes.length;
+  list.innerHTML = filtered.length
+    ? filtered.map(n => `
+        <div class="note-item" data-id="${n.id}" onclick="selectNote('${n.id}')">
+          <div class="note-meta">
+            <span class="note-tag ${n.tag}">${n.tag}</span>
+            <span class="note-date">${n.note_date}</span>
+          </div>
+          <div class="note-title">${esc(n.title)}</div>
+          <div class="note-preview">${esc(n.body)}</div>
+        </div>`).join('')
+    : '<div style="padding:1rem;font-family:var(--mono);font-size:0.72rem;color:var(--text-3)">No notes yet.</div>';
+
+  document.getElementById('note-count').textContent         = notes.length;
+  document.getElementById('note-count-finding').textContent = notes.filter(n => n.tag === 'finding').length;
+  document.getElementById('note-count-issue').textContent   = notes.filter(n => n.tag === 'issue').length;
+  document.getElementById('note-count-idea').textContent    = notes.filter(n => n.tag === 'idea').length;
+  const badge = document.getElementById('notes-nav-badge');
+  if (badge) badge.textContent = notes.length || '—';
 }
 
 function filterNotes(el, tag) {
@@ -1206,132 +1463,219 @@ function selectNote(id) {
   const note = notes.find(n => n.id === id);
   if (!note) return;
   document.querySelectorAll('.note-item').forEach(el => el.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
-  const editor = document.getElementById('note-editor');
-  const list = document.getElementById('note-list');
-  editor.classList.add('open');
-  list.style.display = 'none';
+  document.querySelector(`.note-item[data-id="${id}"]`)?.classList.add('selected');
+  document.getElementById('note-list').style.display   = 'none';
+  document.getElementById('note-editor').classList.add('open');
   document.getElementById('editor-title').value = note.title;
-  document.getElementById('editor-body').value = note.body;
-  editingNote = id;
+  document.getElementById('editor-body').value  = note.body;
+  document.getElementById('editor-tag').value   = note.tag;
+  document.getElementById('delete-note-btn').style.display = '';
+  editingNoteId = id;
+  applyAuth();
 }
 
 function openNewNote() {
-  const editor = document.getElementById('note-editor');
-  const list = document.getElementById('note-list');
-  editor.classList.add('open');
-  list.style.display = 'none';
+  if (!authOk) return;
+  document.getElementById('note-list').style.display   = 'none';
+  document.getElementById('note-editor').classList.add('open');
   document.getElementById('editor-title').value = '';
-  document.getElementById('editor-body').value = '';
-  editingNote = null;
+  document.getElementById('editor-body').value  = '';
+  document.getElementById('editor-tag').value   = 'finding';
+  document.getElementById('delete-note-btn').style.display = 'none';
+  editingNoteId = null;
+  applyAuth();
+  setTimeout(() => document.getElementById('editor-title').focus(), 50);
 }
 
-function saveNote() {
+async function saveNote() {
+  if (!authOk) return;
   const title = document.getElementById('editor-title').value.trim();
-  const body = document.getElementById('editor-body').value.trim();
+  const body  = document.getElementById('editor-body').value.trim();
+  const tag   = document.getElementById('editor-tag').value;
   if (!title) return;
-  if (editingNote) {
-    const note = notes.find(n => n.id === editingNote);
-    if (note) { note.title = title; note.body = body; }
+
+  if (editingNoteId) {
+    const { error } = await sb.from('maxine_notes')
+      .update({ title, body, tag, updated_at: new Date().toISOString() })
+      .eq('id', editingNoteId);
+    if (error) { console.error('saveNote update:', error); return; }
   } else {
-    const today = new Date().toISOString().slice(0, 10);
-    notes.unshift({ id: Date.now(), tag: 'finding', title, date: today, body });
+    const { error } = await sb.from('maxine_notes')
+      .insert({ title, body, tag, note_date: new Date().toISOString().slice(0, 10) });
+    if (error) { console.error('saveNote insert:', error); return; }
   }
   cancelNote();
+  await loadNotes();
+}
+
+async function deleteNote() {
+  if (!authOk || !editingNoteId) return;
+  if (!confirm('Delete this note?')) return;
+  const { error } = await sb.from('maxine_notes').delete().eq('id', editingNoteId);
+  if (error) { console.error('deleteNote:', error); return; }
+  cancelNote();
+  await loadNotes();
 }
 
 function cancelNote() {
   document.getElementById('note-editor').classList.remove('open');
   document.getElementById('note-list').style.display = '';
-  editingNote = null;
+  editingNoteId = null;
   renderNotes();
 }
 
-renderNotes();
+// ── HARDWARE ──
+let hardware = [];
+
+async function loadHardware() {
+  const { data, error } = await sb
+    .from('maxine_hardware')
+    .select('*')
+    .order('sort_order', { ascending: true });
+  if (error) { console.error('loadHardware:', error); return; }
+  hardware = data;
+  renderHardware();
+}
+
+function renderHardware() {
+  const tbody = document.getElementById('hw-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = hardware.map(h => `
+    <tr>
+      <td>${esc(h.name)}</td>
+      <td style="font-family:var(--mono);font-size:0.72rem;">${esc(h.part_no || '—')}</td>
+      <td>${h.qty}</td>
+      <td>${h.unit_cost != null ? '$' + Number(h.unit_cost).toFixed(2) : '—'}</td>
+      <td><span class="status-pill ${h.status}">${h.status}</span></td>
+      <td style="font-size:0.78rem;color:var(--text-3)">${esc(h.notes || '')}</td>
+    </tr>`).join('');
+
+  const total      = hardware.reduce((s, h) => s + (Number(h.unit_cost) * h.qty || 0), 0);
+  const integrated = hardware.filter(h => h.status === 'integrated').length;
+  const ordered    = hardware.filter(h => h.status === 'ordered').length;
+  const testing    = hardware.filter(h => h.status === 'testing').length;
+  document.getElementById('hw-bom-total').textContent  = '$' + total.toFixed(2);
+  document.getElementById('hw-bom-sub').textContent    = `${hardware.length} line items`;
+  document.getElementById('hw-integration').textContent = `${integrated} / ${hardware.length}`;
+  document.getElementById('hw-int-sub').textContent    = `${integrated} integrated · ${testing} testing · ${ordered} ordered`;
+}
+
+function openAddComponent() {
+  if (!authOk) return;
+  document.getElementById('hw-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('hw-name').focus(), 50);
+}
+
+function closeAddComponent() {
+  document.getElementById('hw-modal').style.display = 'none';
+  ['hw-name','hw-part','hw-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('hw-qty').value    = '1';
+  document.getElementById('hw-cost').value   = '';
+  document.getElementById('hw-status').value = 'ordered';
+  document.getElementById('hw-err').style.display = 'none';
+}
+
+async function submitComponent() {
+  if (!authOk) return;
+  const name      = document.getElementById('hw-name').value.trim();
+  const part_no   = document.getElementById('hw-part').value.trim() || null;
+  const qty       = parseInt(document.getElementById('hw-qty').value) || 1;
+  const unit_cost = parseFloat(document.getElementById('hw-cost').value) || null;
+  const status    = document.getElementById('hw-status').value;
+  const notes     = document.getElementById('hw-notes').value.trim() || null;
+  if (!name) { const e = document.getElementById('hw-err'); e.textContent = 'Name is required'; e.style.display = 'block'; return; }
+  const { error } = await sb.from('maxine_hardware')
+    .insert({ name, part_no, qty, unit_cost, status, notes, sort_order: hardware.length });
+  if (error) { const e = document.getElementById('hw-err'); e.textContent = error.message; e.style.display = 'block'; return; }
+  closeAddComponent();
+  await loadHardware();
+}
 
 // ── CHANGELOG ──
-const changelog = [
-  {
-    version: 'v0.2.0',
-    title: 'BLE two-unit architecture + e-paper display',
-    date: '2025-04-21',
-    type: 'arch',
-    changes: [
-      'Split into wearable peripheral + bedside central architecture',
-      'Added aioble BLE stack: ble_peripheral.py + ble_central.py',
-      'Defined shared BLE protocol in shared/ble_protocol.py (UUIDs + struct encoding)',
-      'Replaced OLED with Waveshare 4.2" e-paper (epaper.py)',
-      'Bedside main.py: async gather of wired sensors + BLE + display + logging',
-      'Wearable main.py: sensor bridge + battery monitoring + BLE advertising',
-    ]
-  },
-  {
-    version: 'v0.1.1',
-    title: 'Regulatory review — Path 3 decision',
-    date: '2025-04-20',
-    type: 'doc',
-    changes: [
-      'Documented FDA Class II classification implications for multi-parameter vitals monitor',
-      'HIPAA analysis: device manufacturer not a covered entity unless data shared with clinical systems',
-      'Confirmed Path 3: open source for research, education, personal use only',
-      'Added NOT FOR MEDICAL USE disclaimers to all public-facing materials',
-    ]
-  },
-  {
-    version: 'v0.1.0',
-    title: 'Initial sensor driver layer',
-    date: '2025-04-18',
-    type: 'feat',
-    changes: [
-      'BaseSensor abstract class with safe_read(), initialize(), healthy() contract',
-      'HeartRateSensor: MAX30102 FIFO drain, peak detection, SpO2 Beer-Lambert',
-      'TemperatureSensor: MLX90614 non-contact IR, shared I2C bus injection',
-      'BloodPressureSensor: oscillometric UART cuff, KT-80x packet parser',
-      'RespirationSensor: MPU-6050 IMU or ADC strain gauge, zero-crossing rate',
-      'SensorManager: register, boot, tick, dispatch pattern',
-    ]
-  },
-  {
-    version: 'v0.0.1',
-    title: 'Project scaffolded from VME hospital bed work',
-    date: '2025-04-15',
-    type: 'feat',
-    changes: [
-      'ESP32-WROOM-32E selected as MCU (MicroPython, BLE, WiFi built-in)',
-      'Sensor architecture designed: one driver per sensor, BaseSensor contract',
-      'Hardware BOM finalized: <$120 total',
-      'Project named Maxine after VME bed trigger word',
-    ]
-  },
-];
+let changelogData = [];
+
+async function loadChangelog() {
+  const { data, error } = await sb
+    .from('maxine_changelog')
+    .select('*')
+    .order('sort_order', { ascending: true });
+  if (error) { console.error('loadChangelog:', error); return; }
+  changelogData = data;
+  renderChangelog();
+}
 
 function renderChangelog() {
   const el = document.getElementById('changelog');
-  el.innerHTML = changelog.map((entry, i) => `
+  if (!el) return;
+  if (!changelogData.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-3)">No entries yet.</div>'; return; }
+  el.innerHTML = changelogData.map((entry, i) => `
     <div class="cl-item">
       <div class="cl-header" onclick="toggleCL(${i})">
-        <span class="cl-version">${entry.version}</span>
+        <span class="cl-version">${esc(entry.version)}</span>
         <span class="cl-type ${entry.type}">${entry.type}</span>
-        <span class="cl-title">${entry.title}</span>
-        <span class="cl-date">${entry.date}</span>
+        <span class="cl-title">${esc(entry.title)}</span>
+        <span class="cl-date">${entry.entry_date}</span>
       </div>
       <div class="cl-body" id="cl-${i}">
         <ul class="cl-changes">
-          ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+          ${(entry.changes || []).map(c => `<li>${esc(c)}</li>`).join('')}
         </ul>
       </div>
-    </div>
-  `).join('');
-  // Open first by default
+    </div>`).join('');
   document.getElementById('cl-0')?.classList.add('open');
 }
 
 function toggleCL(i) {
-  const body = document.getElementById(`cl-${i}`);
-  body.classList.toggle('open');
+  document.getElementById(`cl-${i}`)?.classList.toggle('open');
 }
 
-renderChangelog();
+function openAddChangelog() {
+  if (!authOk) return;
+  document.getElementById('cl-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('cl-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('cl-version').focus(), 50);
+}
+
+function closeAddChangelog() {
+  document.getElementById('cl-modal').style.display = 'none';
+  ['cl-version','cl-title','cl-changes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cl-type').value = 'feat';
+  document.getElementById('cl-err').style.display = 'none';
+}
+
+async function submitChangelog() {
+  if (!authOk) return;
+  const version    = document.getElementById('cl-version').value.trim();
+  const title      = document.getElementById('cl-title').value.trim();
+  const entry_date = document.getElementById('cl-date').value || new Date().toISOString().slice(0, 10);
+  const type       = document.getElementById('cl-type').value;
+  const changes    = document.getElementById('cl-changes').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const err        = document.getElementById('cl-err');
+  if (!version || !title) { err.textContent = 'Version and title are required'; err.style.display = 'block'; return; }
+  const { error } = await sb.from('maxine_changelog')
+    .insert({ version, title, entry_date, type, changes, sort_order: changelogData.length });
+  if (error) { err.textContent = error.message; err.style.display = 'block'; return; }
+  closeAddChangelog();
+  await loadChangelog();
+}
+
+// ── UTILS ──
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── INIT ──
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  authOk = !!session;
+  applyAuth();
+  await Promise.all([loadNotes(), loadHardware(), loadChangelog()]);
+}
+
+init();
 </script>
 </body>
 </html>
