@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ── META ── -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maxine — Iteration 1: VME Hospital Bed</title>
+
+  <!-- ── FONTS ── same families used on index.html for visual consistency -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@300;400&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── RESET ── zero out browser defaults */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── COLOR TOKENS ── blue / navy palette
+       --navy:   deep background base
+       --navy-2: slightly lifted surface (cards, panels)
+       --navy-3: border / divider tone
+       --sky:    primary accent (headlines, highlights)
+       --sky-2:  softer accent (sub-labels, tags)
+       --sky-3:  faintest tint (hover fills)
+       --cream:  readable body text on dark
+       --cream-2: muted body text
+       --cream-3: very muted / metadata text
+    */
+    :root {
+      --navy:    #0d1b2a;
+      --navy-2:  #152235;
+      --navy-3:  rgba(255,255,255,0.10);
+      --sky:     #6ab4f5;
+      --sky-2:   #4490d8;
+      --sky-3:   rgba(106,180,245,0.10);
+      --cream:   #e8edf4;
+      --cream-2: #a8b8cc;
+      --cream-3: #6a7f98;
+      --border:  rgba(255,255,255,0.08);
+      --serif:   'Lora', Georgia, serif;
+      --mono:    'DM Mono', monospace;
+      --sans:    'Instrument Sans', sans-serif;
+    }
+
+    /* ── BASE ── dark background, light text */
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--navy);
+      color: var(--cream);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
+    h2 { font-size: clamp(1.3rem, 3vw, 1.9rem); }
+    h3 { font-size: 1.1rem; }
+    p  { color: var(--cream-2); }
+    a  { color: var(--sky); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── LAYOUT UTILITIES ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--sky);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── NAV ── sticky top bar with back link and project title -->
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,27,42,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .nav-back {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--cream-3);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .nav-back:hover { color: var(--sky); text-decoration: none; }
+    .nav-back::before { content: "←"; }
+    .nav-title {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--cream-2);
+      letter-spacing: 0.06em;
+    }
+    /* divider dot between nav items */
+    .nav-sep {
+      font-size: 0.5rem;
+      color: var(--cream-3);
+    }
+
+    /* ── HERO ── top section with big headline and project meta -->
+    .hero {
+      padding: 6rem 0 4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sky-2);
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 {
+      margin-bottom: 1.5rem;
+    }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--cream-2);
+      max-width: 620px;
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+    }
+    /* meta chips: course code, institution, year */
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      padding: 0.3rem 0.75rem;
+      border-radius: 2rem;
+      border: 1px solid var(--sky-2);
+      color: var(--sky);
+      background: var(--sky-3);
+    }
+
+    /* ── CREDITS BANNER ── -->
+    .credits-banner {
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 2rem 2.5rem;
+      margin: 3rem 0;
+    }
+    .credits-banner h3 {
+      color: var(--sky);
+      margin-bottom: 1.2rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
+    /* two-column grid for credit groups on wider screens */
+    .credits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem 3rem;
+    }
+    @media (max-width: 600px) {
+      .credits-grid { grid-template-columns: 1fr; }
+    }
+    .credit-group-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-3);
+      margin-bottom: 0.4rem;
+    }
+    .credit-names {
+      color: var(--cream);
+      font-size: 0.92rem;
+      line-height: 1.7;
+    }
+
+    /* ── MAIN CONTENT ── alternating prose sections -->
+    .content-section {
+      padding: 4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .content-section:last-of-type {
+      border-bottom: none;
+    }
+    .section-body {
+      margin-top: 1.5rem;
+    }
+    .section-body p + p {
+      margin-top: 1rem;
+    }
+
+    /* ── STAT CARDS ── for numbers: budget, accuracy, etc. -->
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    .stat-card {
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1.25rem 1.5rem;
+    }
+    .stat-val {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      color: var(--sky);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cream-3);
+    }
+
+    /* ── COMMANDS TABLE ── voice command listing -->
+    .cmd-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+    .cmd-table th {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-3);
+      text-align: left;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--navy-3);
+    }
+    .cmd-table td {
+      padding: 0.7rem 1rem;
+      color: var(--cream-2);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    /* highlight the trigger word column */
+    .cmd-table td:first-child {
+      font-family: var(--mono);
+      color: var(--sky);
+      font-size: 0.82rem;
+    }
+    .cmd-table tr:last-child td { border-bottom: none; }
+
+    /* ── HARDWARE BLOCKS ── two-column hardware description cards -->
+    .hw-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    @media (max-width: 600px) {
+      .hw-grid { grid-template-columns: 1fr; }
+    }
+    .hw-card {
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1.25rem 1.5rem;
+    }
+    .hw-card-title {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--sky-2);
+      margin-bottom: 0.5rem;
+    }
+    .hw-card p {
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* ── CALLOUT ── the "Maxine" name origin highlight -->
+    .callout {
+      background: var(--sky-3);
+      border-left: 3px solid var(--sky);
+      border-radius: 0 0.5rem 0.5rem 0;
+      padding: 1.25rem 1.5rem;
+      margin: 2rem 0;
+    }
+    .callout p {
+      color: var(--cream);
+      font-style: italic;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    .callout-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--sky-2);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── FUTURE VISION LIST ── what became Maxine vNext -->
+    .vision-list {
+      list-style: none;
+      margin: 1.5rem 0;
+    }
+    .vision-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      color: var(--cream-2);
+      font-size: 0.92rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .vision-list li:last-child { border-bottom: none; }
+    /* arrow bullet */
+    .vision-list li::before {
+      content: "→";
+      font-family: var(--mono);
+      color: var(--sky);
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+
+    /* ── FOOTER ── -->
+    footer {
+      background: var(--navy-2);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--cream-3);
+      letter-spacing: 0.06em;
+    }
+    footer a { color: var(--sky-2); }
+    .footer-row + .footer-row { margin-top: 0.4rem; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── NAVIGATION ── sticky bar: back to main site + breadcrumb -->
+  <nav>
+    <a href="index.html" class="nav-back">Maxine</a>
+    <span class="nav-sep">·</span>
+    <span class="nav-title">Iteration 1 — VME Hospital Bed</span>
+  </nav>
+
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="container">
+
+      <!-- eyebrow: course context -->
+      <div class="hero-eyebrow">EG 497 / 498 · Engineering Design Project II</div>
+
+      <h1>The bed that<br><em>started it all.</em></h1>
+
+      <p class="hero-sub">
+        Before Maxine was a patient monitor, it was a trigger word — spoken aloud to move a hospital bed.
+        This is the story of Iteration 1: a voice-activated bed control system built for patients
+        who could not press a button.
+      </p>
+
+      <!-- metadata chips -->
+      <div class="hero-meta">
+        <span class="chip">Loyola University</span>
+        <span class="chip">EG 497 / 498</span>
+        <span class="chip">2024 – 2025</span>
+        <span class="chip">Volunteers for Medical Engineering</span>
+        <span class="chip">Puerto Rico Clinical Partner</span>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── CREDITS ── everyone who made this project happen -->
+  <div class="container">
+    <div class="credits-banner">
+      <h3>Credits</h3>
+      <div class="credits-grid">
+
+        <!-- design team -->
+        <div>
+          <div class="credit-group-label">Engineering Team</div>
+          <div class="credit-names">
+            Amelia Arabe<br>
+            Alex Kranov<br>
+            Madison Rolle<br>
+            Chris Sabins
+          </div>
+        </div>
+
+        <!-- sponsor and client -->
+        <div>
+          <div class="credit-group-label">Sponsor</div>
+          <div class="credit-names">
+            Volunteers for Medical Engineering (VME)
+          </div>
+          <div class="credit-group-label" style="margin-top:1rem">Client</div>
+          <div class="credit-names">
+            Dr. Mauricio Lizama<br>
+            <span style="font-size:0.82rem;color:var(--cream-3)">Clinician · Puerto Rico</span>
+          </div>
+        </div>
+
+        <!-- faculty advisors -->
+        <div>
+          <div class="credit-group-label">Faculty Advisors</div>
+          <div class="credit-names">
+            Dr. Keilson — Sponsor &amp; Mentor<br>
+            Dr. Bailey — Faculty Advisor<br>
+            Dr. Kranov — Faculty Advisor
+          </div>
+        </div>
+
+        <!-- institution -->
+        <div>
+          <div class="credit-group-label">Institution</div>
+          <div class="credit-names">
+            Loyola University Chicago<br>
+            <span style="font-size:0.82rem;color:var(--cream-3)">Department of Engineering</span>
+          </div>
+        </div>
+
+      </div><!-- /credits-grid -->
+    </div><!-- /credits-banner -->
+  </div>
+
+
+  <!-- ── SECTION: BACKGROUND ── why this project exists -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-label">The problem</div>
+      <h2>A patient who could speak, but not press a button.</h2>
+      <div class="section-body">
+        <p>
+          Dr. Mauricio Lizama works with quadriplegic patients in Puerto Rico — patients with limited or no
+          use of their hands. Standard hospital beds are operated with wired push-button controllers.
+          For many of Dr. Lizama's patients, those buttons are inaccessible.
+        </p>
+        <p>
+          VME (Volunteers for Medical Engineering) brought this challenge to Loyola's Engineering Design
+          program. The ask: design a voice-controlled interface that would let patients reposition a
+          hospital bed using spoken commands — without expensive commercial assistive tech.
+        </p>
+        <p>
+          Our team of four took on the project for EG 497/498 and delivered a working prototype with a
+          trained vocabulary of seven commands, a trigger-word activation system, and a physical scale model
+          of the bed mechanism.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: HOW IT WORKS ── system overview -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-label">System architecture</div>
+      <h2>Two enclosures. One voice.</h2>
+      <div class="section-body">
+        <p>
+          The system is split into two physical units connected by wiring through the bed frame.
+          The patient-facing top box handles all audio input and user feedback.
+          The bottom box, hidden in the base of the bed, contains the processing and relay hardware.
+        </p>
+
+        <!-- two hardware cards: top box and bottom box -->
+        <div class="hw-grid">
+          <div class="hw-card">
+            <div class="hw-card-title">Top Box — Patient Unit</div>
+            <p>
+              4″ × 4″ × 3″ enclosure.<br>
+              LCD display · Microphone · Speaker · Joystick override.<br>
+              Shows current command received and system status.
+              Joystick provides a non-voice fallback for caregivers.
+            </p>
+          </div>
+          <div class="hw-card">
+            <div class="hw-card-title">Bottom Box — Control Unit</div>
+            <p>
+              10″ × 10″ × 5″ enclosure.<br>
+              Arduino Mega · EasyVR 3 Plus (Fortebit) · Relay board.<br>
+              Receives decoded command from VR chip,
+              activates the correct relay to drive the actuator motor.
+            </p>
+          </div>
+        </div>
+
+        <!-- additional hardware notes -->
+        <p>
+          The EasyVR 3 Plus is a speaker-dependent voice recognition module — it is trained on a
+          specific person's voice, which gives it a high rejection rate for strangers and background noise.
+          All seven commands were trained by a member of the team and verified against the Harvard
+          Sentence corpus to measure false-positive performance.
+        </p>
+        <p>
+          The bed mechanism is demonstrated with a 1:2 scale aluminum frame model driven by
+          MaoPiner linear actuators, matching the geometry of a real clinical bed.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: COMMANDS ── the seven voice commands -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-label">Voice interface</div>
+      <h2>Seven commands. One trigger word.</h2>
+      <div class="section-body">
+        <p>
+          The system uses a two-step activation pattern: the patient first says the trigger word to
+          wake the chip from standby, then speaks a command. This prevents unintended actuation from
+          ambient speech in a clinical environment.
+        </p>
+
+        <!-- the callout that names the project -->
+        <div class="callout">
+          <div class="callout-label">How the name started</div>
+          <p>
+            "Maxine" was chosen as the trigger word because it is phonetically distinct, uncommon in
+            clinical speech, and easy to pronounce clearly. It was trained into the EasyVR chip.
+            When we built the next project — a full patient monitoring system — it inherited the name.
+            Maxine it is.
+          </p>
+        </div>
+
+        <!-- command table: trigger word + action + axis -->
+        <table class="cmd-table">
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Action</th>
+              <th>Actuator</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Head Up</td>
+              <td>Raise head section</td>
+              <td>Head actuator ↑</td>
+            </tr>
+            <tr>
+              <td>Head Down</td>
+              <td>Lower head section</td>
+              <td>Head actuator ↓</td>
+            </tr>
+            <tr>
+              <td>Feet Up</td>
+              <td>Raise foot section</td>
+              <td>Foot actuator ↑</td>
+            </tr>
+            <tr>
+              <td>Feet Down</td>
+              <td>Lower foot section</td>
+              <td>Foot actuator ↓</td>
+            </tr>
+            <tr>
+              <td>Bed Up</td>
+              <td>Raise entire bed (High)</td>
+              <td>Both actuators ↑</td>
+            </tr>
+            <tr>
+              <td>Bed Down</td>
+              <td>Lower entire bed (Low)</td>
+              <td>Both actuators ↓</td>
+            </tr>
+            <tr>
+              <td>Call Help</td>
+              <td>Trigger nurse-call alert</td>
+              <td>Alarm relay</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The trigger word "Maxine" must be spoken before each command. The chip returns to standby
+          automatically after a response, preventing runaway actuation.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: PERFORMANCE ── test results -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-label">Performance</div>
+      <h2>Tested. Measured. Documented.</h2>
+      <div class="section-body">
+        <p>
+          All testing was conducted in a quiet lab environment and a simulated clinical environment
+          with background noise (TV, conversation). Commands were tested 10 times per condition.
+          Harvard sentences were used to measure false-positive (unintended actuation) performance.
+        </p>
+
+        <!-- key numbers at a glance -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-val">90%</div>
+            <div class="stat-label">Trigger word recognition rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">100%</div>
+            <div class="stat-label">Harvard sentence rejection rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">10 / 10</div>
+            <div class="stat-label">Most commands in all test conditions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">7</div>
+            <div class="stat-label">Trained voice commands</div>
+          </div>
+        </div>
+
+        <p>
+          The 100% Harvard sentence rejection rate is the most important safety metric: the system
+          never activated a relay in response to normal clinical conversation during testing.
+          The 90% trigger word recognition rate reflects the speaker-dependent nature of the
+          EasyVR chip — recognition was near-perfect for the trained voice, with expected degradation
+          under high ambient noise.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: BUDGET ── cost breakdown -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-label">Budget</div>
+      <h2>$600 given. $384.82 spent.</h2>
+      <div class="section-body">
+        <p>
+          VME provided a $600 budget for the full prototype. The final bill of materials came to
+          $384.82 — under budget by over $215. All components were commercially available, off-the-shelf
+          parts, consistent with VME's goal of producing a replicable, low-cost solution.
+        </p>
+
+        <!-- budget stat cards -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-val">$600</div>
+            <div class="stat-label">Sponsor budget (VME)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">$384.82</div>
+            <div class="stat-label">Actual spend</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">$215+</div>
+            <div class="stat-label">Returned to sponsor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: WHAT CAME NEXT ── the bridge to Maxine the monitor -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-label">What came next</div>
+      <h2>One question opened a hundred more.</h2>
+      <div class="section-body">
+        <p>
+          Completing the VME bed project made one clinical gap impossible to ignore: patients with
+          limited mobility who need voice control of a bed almost certainly also need low-cost,
+          accessible monitoring of their own vital signs — especially in home or resource-limited settings.
+          No such open-source option existed.
+        </p>
+        <p>
+          The future vision documented in the pitch deck listed the next steps for the bed itself:
+          vital signs integration, ambient temperature control, voice audio responses, and
+          position memory presets. Each of those features pointed toward a standalone monitoring system.
+        </p>
+        <p>That system became Maxine.</p>
+
+        <!-- features that became Maxine vNext -->
+        <ul class="vision-list">
+          <li>Vital signs tracking (HR, SpO₂, temperature, respiration) → became the Maxine sensor suite</li>
+          <li>Ambient temperature monitoring → became the MLX90614 IR sensor integration</li>
+          <li>Voice audio responses → carried forward as a future Maxine feature</li>
+          <li>Position memory presets → informed the BLE command protocol design</li>
+          <li>Low-cost, open, replicable → the entire design philosophy of Maxine</li>
+        </ul>
+
+        <p>
+          The name carried forward too. "Maxine" — the trigger word trained into the EasyVR chip — became
+          the name of the project, the repository, and eventually this research platform.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: BACK LINK ── return to main project -->
+  <section class="content-section" style="padding: 3rem 0;">
+    <div class="container" style="text-align:center">
+      <p style="color:var(--cream-3); font-family:var(--mono); font-size:0.75rem; margin-bottom:1rem; letter-spacing:0.08em;">
+        ITERATION 2 →
+      </p>
+      <a href="index.html" style="
+        display: inline-block;
+        padding: 0.8rem 2rem;
+        border: 1px solid var(--sky-2);
+        border-radius: 0.4rem;
+        color: var(--sky);
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        background: var(--sky-3);
+        transition: background 0.15s;
+      ">
+        Explore Maxine →
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-row">
+      VME Hospital Bed Project · EG 497/498 · Loyola University Chicago · 2024–2025
+    </div>
+    <div class="footer-row">
+      Team: Amelia Arabe · Alex Kranov · Madison Rolle · Chris Sabins
+    </div>
+    <div class="footer-row" style="margin-top:0.8rem">
+      Sponsor: <a href="#">Volunteers for Medical Engineering</a> ·
+      Client: Dr. Mauricio Lizama ·
+      Advisors: Dr. Keilson · Dr. Bailey · Dr. Kranov
+    </div>
+    <div class="footer-row" style="margin-top:0.8rem">
+      <a href="index.html">← Back to Maxine</a>
+    </div>
+  </footer>
+
+</body>
+</html>

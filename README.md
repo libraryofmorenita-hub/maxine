@@ -10,7 +10,7 @@
 
 Maxine is a wireless, modular, bedside patient monitoring system built on the ESP32 microcontroller and MicroPython. It monitors heart rate, SpO₂, temperature, blood pressure, and respiratory rate — displaying them on a low-power e-paper screen and streaming them via Bluetooth LE.
 
-It began as a clinical question: after building a voice-activated hospital bed control system for quadriplegic patients in Puerto Rico (sponsored by [Volunteers for Medical Engineering](https://vme.org)), we asked — *what comes after the bed?* Maxine is the answer we're still building.
+It began as a clinical question: after building a voice-activated hospital bed control system for quadriplegic patients in Puerto Rico (sponsored by [Volunteers for Medical Engineering](https://imagemd.org/services/medical-engineering/volunteer/)), we asked — *what comes after the bed?* Maxine is the answer we're still building.
 
 **"Maxine" is the trigger word the original VME bed listens for. We carried the name forward.**
 
